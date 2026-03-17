@@ -1,0 +1,3846 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TurnoShift</title>
+<link rel="icon" type="image/png" href="https://img.icons8.com/color/48/calendar-plus.png">
+
+<!-- ============================================================
+     DEPENDENCIAS EXTERNAS
+     - Tailwind CSS (utilidades)
+     - Material Symbols (iconos planos)
+     - Google Fonts: DM Sans + DM Serif Display
+     ============================================================ -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+<!-- ============================================================
+     CONFIGURACIÓN TAILWIND
+     ============================================================ -->
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['DM Sans', 'sans-serif'],
+        display: ['DM Serif Display', 'serif'],
+      }
+    }
+  }
+}
+</script>
+
+<!-- ============================================================
+     VARIABLES CSS Y ESTILOS BASE
+     ============================================================ -->
+<style>
+  /* ─── Variables de tema ─── */
+  :root {
+    --bg-primary: #F5F5F7;
+    --bg-card: #FFFFFF;
+    --bg-card-hover: #F0F0F2;
+    --text-primary: #1A1A2E;
+    --text-secondary: #6B6B80;
+    --text-muted: #9999AA;
+    --border: #E5E5EA;
+    --border-light: #F0F0F5;
+    --accent: #5B5FED;
+    --accent-light: #EEF0FF;
+    --accent-hover: #4548D4;
+    --weekend: #FF4D6D;
+    --today-bg: #1A1A2E;
+    --today-text: #FFFFFF;
+    --nav-bg: #FFFFFF;
+    --nav-border: #E5E5EA;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.06);
+    --fab-bg: #1A1A2E;
+    --fab-text: #FFFFFF;
+    --edit-bar-bg: #FFFFFF;
+  }
+
+  html.dark {
+    --bg-primary: #0F0F17;
+    --bg-card: #1C1C28;
+    --bg-card-hover: #252535;
+    --text-primary: #F0F0F8;
+    --text-secondary: #9090A8;
+    --text-muted: #6060780;
+    --border: #2A2A3A;
+    --border-light: #222232;
+    --accent: #7B7FFF;
+    --accent-light: #1A1A35;
+    --accent-hover: #9B9FFF;
+    --weekend: #FF6B85;
+    --today-bg: #F0F0F8;
+    --today-text: #0F0F17;
+    --nav-bg: #1C1C28;
+    --nav-border: #2A2A3A;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.2);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.3);
+    --fab-bg: #F0F0F8;
+    --fab-text: #0F0F17;
+    --edit-bar-bg: #1C1C28;
+  }
+
+  /* ─── Base ─── */
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    max-width: 430px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ─── App container ─── */
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* ─── Vistas ─── */
+  .view { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+  .view.active { display: flex; }
+
+  /* ─── Scrollable content ─── */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+  .scroll-area::-webkit-scrollbar { display: none; }
+
+  /* ─── Barra de navegación inferior ─── */
+  #nav-bar {
+    background-color: var(--nav-bg);
+    border-top: 1px solid var(--nav-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+    transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.3s ease;
+    z-index: 50;
+    box-shadow: 0 -1px 0 var(--border);
+  }
+  #nav-bar.hidden-nav {
+    transform: translateY(100%);
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+  }
+
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 4px 16px;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    flex: 1;
+    color: var(--text-muted);
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item .nav-label { font-size: 10px; font-weight: 500; }
+  .nav-item .material-symbols-rounded { font-size: 22px; }
+
+  /* ─── Material Symbols config ─── */
+  .material-symbols-rounded {
+    font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
+  }
+  .material-symbols-rounded.filled {
+    font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  /* ─── Header de vistas ─── */
+  .view-header {
+    padding: 16px 20px 8px;
+    flex-shrink: 0;
+    background-color: var(--bg-primary);
+  }
+  .view-title {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.1;
+    letter-spacing: -0.5px;
+  }
+
+  /* ─── Calendario ─── */
+
+  /* Transición al cambiar de mes */
+  @keyframes calSlideInRight {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  @keyframes calSlideInLeft {
+    from { opacity: 0; transform: translateX(-24px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  #calendar-grid.anim-right { animation: calSlideInRight 0.22s cubic-bezier(0.4,0,0.2,1); }
+  #calendar-grid.anim-left  { animation: calSlideInLeft  0.22s cubic-bezier(0.4,0,0.2,1); }
+
+  .cal-weekday {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 3px 0;          /* reducido de 6px → 3px para pegar la cabecera a la fila */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    min-width: 0;
+    overflow: hidden;
+    align-self: end;         /* alinea al fondo de su celda */
+  }
+  .cal-weekday.weekend { color: var(--weekend); }
+
+  .cal-day {
+    border: 1px solid var(--border-light);
+    min-height: 60px;
+    padding: 4px 3px;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    position: relative;
+    background-color: var(--bg-card);
+    min-width: 0;
+    overflow: hidden;
+  }
+  .cal-day:hover { background-color: var(--bg-card-hover); }
+  .cal-day.weekend .day-num { color: var(--weekend); }
+  .cal-day.today .day-num {
+    background-color: var(--today-bg);
+    color: var(--today-text);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+  }
+  .cal-day.empty {
+    background-color: var(--bg-primary);
+    cursor: default;
+    border-color: transparent;
+  }
+
+  .day-num {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 3px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ─── Chips de turnos en calendario ─── */
+  .shift-chip {
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 3px;
+    border-radius: 3px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #fff;
+    line-height: 1.4;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .event-dot {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 9px;
+    color: var(--text-secondary);
+    margin-bottom: 1px;
+  }
+  .event-dot::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+
+  .more-indicator {
+    font-size: 8px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* ─── FAB ─── */
+  #fab-btn {
+    position: fixed;
+    bottom: calc(env(safe-area-inset-bottom) + 72px);
+    right: 20px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background-color: var(--fab-bg);
+    color: var(--fab-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+    z-index: 100;
+    border: none;
+  }
+  #fab-btn:active { transform: scale(0.92); }
+  #fab-btn.edit-mode {
+    background-color: var(--weekend);
+    color: #fff;
+  }
+
+  /* ─── Barra de edición (turnos seleccionables) ─── */
+  #edit-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 430px;
+    margin: 0 auto;
+    background-color: var(--edit-bar-bg);
+    border-top: 1px solid var(--border);
+    padding: 12px 0 max(16px, env(safe-area-inset-bottom));
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    z-index: 90;
+    box-shadow: var(--shadow-lg);
+  }
+  #edit-bar.visible { transform: translateY(0); }
+
+  .edit-bar-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 16px 8px;
+  }
+
+  #edit-bar-scroll {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 0 16px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #edit-bar-scroll::-webkit-scrollbar { display: none; }
+
+  .edit-shift-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 6px;
+    border-radius: 12px;
+    transition: background-color 0.15s ease;
+  }
+  .edit-shift-chip:active { background-color: var(--bg-card-hover); }
+  .edit-shift-chip.selected { background-color: var(--accent-light); }
+
+  .edit-shift-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    border: 3px solid transparent;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+  }
+  .edit-shift-chip.selected .edit-shift-avatar {
+    border-color: var(--accent);
+    transform: scale(1.05);
+  }
+
+  .edit-shift-name {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    max-width: 60px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .edit-add-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 6px;
+    border-radius: 12px;
+  }
+  .edit-add-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px dashed var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+  }
+  .edit-add-label {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-muted);
+    max-width: 60px;
+    text-align: center;
+  }
+
+  /* ─── Tarjeta de día (bottom sheet) ─── */
+  #day-sheet-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  #day-sheet-overlay.visible { opacity: 1; pointer-events: all; }
+
+  #day-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-width: 430px;
+    margin: 0 auto;
+    background-color: var(--bg-card);
+    border-radius: 20px 20px 0 0;
+    padding: 0 0 max(24px, env(safe-area-inset-bottom));
+    z-index: 201;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+    max-height: 75dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  #day-sheet.visible { transform: translateY(0); }
+
+  .sheet-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: var(--border);
+    margin: 10px auto 0;
+    flex-shrink: 0;
+  }
+
+  .sheet-header {
+    padding: 12px 20px 8px;
+    flex-shrink: 0;
+  }
+  .sheet-date {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .sheet-scroll {
+    overflow-y: auto;
+    flex: 1;
+    padding: 0 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sheet-scroll::-webkit-scrollbar { display: none; }
+
+  .sheet-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 12px 0 6px;
+  }
+
+  .sheet-shift-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .sheet-shift-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .sheet-shift-info { flex: 1; }
+  .sheet-shift-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+  .sheet-shift-time { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+  .sheet-shift-hours {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+
+  .sheet-event-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .sheet-event-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--accent);
+    margin-top: 5px;
+    flex-shrink: 0;
+  }
+  .sheet-event-name { font-size: 14px; font-weight: 500; color: var(--text-primary); }
+  .sheet-event-time { font-size: 12px; color: var(--text-secondary); }
+
+  .sheet-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 8px 0;
+    font-style: italic;
+  }
+
+  .sheet-actions {
+    display: flex;
+    gap: 10px;
+    padding: 16px 20px 0;
+    flex-shrink: 0;
+    border-top: 1px solid var(--border-light);
+  }
+  .sheet-action-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px;
+    border-radius: 12px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: background-color 0.15s ease;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .sheet-action-btn:active { background-color: var(--bg-card-hover); }
+
+  /* ─── Modales ─── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 300;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .modal-overlay.visible { opacity: 1; pointer-events: all; }
+
+  .modal-box {
+    background-color: var(--bg-card);
+    border-radius: 20px 20px 0 0;
+    padding: 0;
+    width: 100%;
+    max-width: 430px;
+    max-height: 90dvh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+  }
+  .modal-overlay.visible .modal-box { transform: translateY(0); }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: var(--border);
+    margin: 10px auto 0;
+    flex-shrink: 0;
+  }
+
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px 0;
+    flex-shrink: 0;
+  }
+  .modal-title { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text-secondary);
+    border: none;
+    transition: background-color 0.15s;
+  }
+  .modal-close:active { background-color: var(--border); }
+
+  .modal-scroll {
+    overflow-y: auto;
+    flex: 1;
+    padding: 16px 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .modal-scroll::-webkit-scrollbar { display: none; }
+
+  .modal-footer {
+    padding: 12px 20px max(20px, env(safe-area-inset-bottom));
+    flex-shrink: 0;
+    border-top: 1px solid var(--border-light);
+  }
+
+  /* ─── Formulario ─── */
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 6px;
+  }
+  .form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .form-input:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .form-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background-color: var(--bg-primary);
+    cursor: pointer;
+  }
+  .form-toggle-label { font-size: 15px; color: var(--text-primary); }
+
+  /* Toggle switch */
+  .toggle-switch {
+    width: 44px;
+    height: 26px;
+    border-radius: 13px;
+    background-color: var(--border);
+    position: relative;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+  }
+  .toggle-switch.on { background-color: var(--accent); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #fff;
+    transition: transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  .toggle-switch.on::after { transform: translateX(18px); }
+
+  /* Color picker */
+  .color-grid {
+    display: grid;
+    grid-template-columns: repeat(10, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .color-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid transparent;
+    transition: transform 0.15s ease, border-color 0.15s ease;
+  }
+  .color-swatch.selected {
+    border-color: var(--text-primary);
+    transform: scale(1.15);
+  }
+  .color-custom-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    border: 1.5px dashed var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .color-custom-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Botón primario */
+  .btn-primary {
+    width: 100%;
+    padding: 14px;
+    border-radius: 14px;
+    background-color: var(--accent);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+  }
+  .btn-primary:active { transform: scale(0.98); background-color: var(--accent-hover); }
+
+  /* ─── Vista Turnos ─── */
+  .shifts-list {
+    padding: 0 16px;
+  }
+  .shifts-card {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .shift-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+  .shift-list-item:last-child { border-bottom: none; }
+  .shift-list-item:active { background-color: var(--bg-card-hover); }
+
+  .shift-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .shift-info { flex: 1; }
+  .shift-name { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+  .shift-time { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .shift-chevron { color: var(--text-muted); }
+
+  /* ─── Vista Ajustes ─── */
+  .settings-section {
+    padding: 0 16px;
+    margin-bottom: 24px;
+  }
+  .settings-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    margin-bottom: 8px;
+    padding: 0 4px;
+  }
+  .settings-card {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+  }
+  .settings-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background-color 0.15s;
+  }
+  .settings-item:last-child { border-bottom: none; }
+  .settings-item-label {
+    font-size: 15px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-item-label .material-symbols-rounded {
+    font-size: 20px;
+    color: var(--text-secondary);
+  }
+  .settings-item-value {
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* Segmented control */
+  .segmented-control {
+    display: flex;
+    background-color: var(--bg-primary);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 0;
+    border: 1px solid var(--border);
+  }
+  .segment-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .segment-btn.active {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    font-weight: 600;
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* ─── Informes - tarjetas ─── */
+  .informe-card {
+    background-color: var(--bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 16px;
+  }
+  .informe-card-header {
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .informe-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .informe-card-actions {
+    display: flex;
+    gap: 4px;
+  }
+  .informe-card-body { padding: 0 16px; }
+  .informe-pago-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-light);
+    gap: 8px;
+  }
+  .informe-pago-row:last-child { border-bottom: none; }
+  .informe-pago-label { font-size: 14px; color: var(--text-secondary); flex:1; }
+  .informe-pago-sub { font-size: 11px; color: var(--text-muted); margin-top:2px; }
+  .informe-pago-valor { font-size: 14px; font-weight: 600; color: var(--text-primary); white-space:nowrap; }
+  .informe-pago-valor.positive { color: #22C55E; }
+  .informe-total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-top: 1.5px solid var(--border);
+    background: var(--bg-primary);
+  }
+  .informe-total-label { font-size: 15px; font-weight: 700; color: var(--text-primary); }
+  .informe-total-valor { font-size: 16px; font-weight: 800; color: var(--text-primary); }
+  .informe-avatars {
+    display: flex;
+    padding: 10px 16px;
+    gap: -4px;
+  }
+  .informe-avatar-sm {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+    color: #fff;
+    margin-right: -6px;
+    border: 2px solid var(--bg-card);
+    flex-shrink: 0;
+  }
+  .informe-more-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-primary);
+    border: 2px solid var(--bg-card);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: var(--text-secondary);
+    margin-right: -6px;
+    cursor: pointer;
+  }
+
+  /* Informes - estilos dentro del modal */
+  .informe-turno-check {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-light);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .informe-turno-check:last-child { border-bottom: none; }
+  .informe-turno-check:active { background: var(--bg-card-hover); }
+  .check-box {
+    width: 20px; height: 20px; border-radius: 6px;
+    border: 2px solid var(--border); background: var(--bg-card);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s;
+  }
+  .check-box.checked { background: var(--accent); border-color: var(--accent); }
+  .check-box.checked::after {
+    content: ''; width: 5px; height: 9px;
+    border-right: 2px solid #fff; border-bottom: 2px solid #fff;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+
+  .pago-extra-block, .pago-fijo-block {
+    background: var(--bg-primary);
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .pago-block-title {
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+    margin-bottom: 8px; display: flex; align-items: center;
+    justify-content: space-between;
+  }
+  .pago-remove-btn {
+    background: none; border: none; cursor: pointer;
+    color: var(--weekend); padding: 2px; display: flex;
+  }
+
+  .informes-period {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .informes-period button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+  }
+  .informes-period button:active { background-color: var(--bg-card-hover); }
+
+  /* ─── Animaciones ─── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .view.active { animation: fadeIn 0.2s ease; }
+
+  /* ─── Swipe indicator en calendario ─── */
+  #cal-swipe-area {
+    touch-action: pan-y;
+    user-select: none;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* El grid ocupa todo el alto del swipe-area */
+  #calendar-grid {
+    flex: 1;
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr);
+    /* Primera fila = cabeceras (auto), resto de filas llenan el espacio disponible */
+    grid-template-rows: auto repeat(6, 1fr);
+    gap: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  /* ─── Credenciales Supabase ─── */
+  .supabase-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+  .supabase-status.connected { background-color: #D1FAE5; color: #065F46; }
+  .supabase-status.disconnected { background-color: #FEE2E2; color: #991B1B; }
+  html.dark .supabase-status.connected { background-color: #064E3B; color: #6EE7B7; }
+  html.dark .supabase-status.disconnected { background-color: #450A0A; color: #FCA5A5; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background-color: currentColor; }
+
+  /* ─── Responsive en desktop ─── */
+  @media (min-width: 430px) {
+    body {
+      box-shadow: 0 0 60px rgba(0,0,0,0.2);
+    }
+    #fab-btn { right: calc(50% - 215px + 20px); }
+    #edit-bar, #day-sheet, #day-sheet-overlay { max-width: 430px; }
+    .modal-overlay { align-items: flex-end; }
+  }
+
+  /* ─── Ajuste para que no se superponga el FAB con la barra ─── */
+  .view.active { padding-bottom: 0; }
+
+  /* input[type=color] personalizado */
+  input[type="color"] {
+    width: 40px;
+    height: 40px;
+    padding: 2px;
+    border-radius: 8px;
+    border: 2px solid var(--border);
+    background: none;
+    cursor: pointer;
+  }
+
+  /* ─── Input monetario con prefijo $ ─── */
+  .input-money-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .input-money-wrap .money-prefix {
+    position: absolute;
+    left: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    pointer-events: none;
+    user-select: none;
+  }
+  .input-money-wrap .form-input {
+    padding-left: 22px;
+  }
+
+  /* ─── Shimmer de carga ─── */
+  .skeleton {
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 6px;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+</style>
+</head>
+
+<body>
+<div id="app">
+
+  <!-- ============================================================
+       VISTA 1: CALENDARIO
+       ============================================================ -->
+  <div class="view active" id="view-calendario">
+    <!-- Header con título del mes y flechas de navegación -->
+    <div class="view-header" style="display:flex; align-items:center; justify-content:space-between; padding-bottom:4px;">
+      <button onclick="navigateMonth(-1)" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-secondary);display:flex;align-items:center;border-radius:8px;transition:background 0.15s;" onmouseenter="this.style.background='var(--bg-card)'" onmouseleave="this.style.background='none'">
+        <span class="material-symbols-rounded" style="font-size:24px;">chevron_left</span>
+      </button>
+      <div class="view-title" id="cal-month-title" style="font-size:28px;">Marzo</div>
+      <button onclick="navigateMonth(1)" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-secondary);display:flex;align-items:center;border-radius:8px;transition:background 0.15s;" onmouseenter="this.style.background='var(--bg-card)'" onmouseleave="this.style.background='none'">
+        <span class="material-symbols-rounded" style="font-size:24px;">chevron_right</span>
+      </button>
+    </div>
+
+    <!-- Calendario -->
+    <div class="scroll-area" id="cal-swipe-area">
+      <div id="calendar-grid"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       VISTA 2: INFORMES
+       ============================================================ -->
+  <div class="view" id="view-informes">
+    <div class="view-header" style="display:flex; align-items:center; justify-content:space-between; padding-bottom:8px;">
+      <div>
+        <div class="view-title">Informes</div>
+        <div class="informes-period">
+          <button id="informe-prev"><span class="material-symbols-rounded" style="font-size:18px;">chevron_left</span></button>
+          <span id="informe-period-label"></span>
+          <button id="informe-next"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="scroll-area">
+      <div id="informes-content" style="padding:0 16px;"></div>
+      <div style="height:90px;"></div>
+    </div>
+    <!-- FAB añadir informe — esquina inferior derecha -->
+    <button id="fab-informes" onclick="openModalInforme(null)" style="display:none;position:fixed;bottom:calc(env(safe-area-inset-bottom) + 72px);right:20px;width:52px;height:52px;border-radius:50%;background-color:var(--fab-bg);color:var(--fab-text);align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-lg);border:none;z-index:100;">
+      <span class="material-symbols-rounded" style="font-size:26px;">add</span>
+    </button>
+  </div>
+
+  <!-- ============================================================
+       VISTA 3: TURNOS
+       ============================================================ -->
+  <div class="view" id="view-turnos">
+    <div class="view-header" style="display:flex; align-items:center; justify-content:space-between; padding-bottom:12px;">
+      <div class="view-title">Turnos</div>
+      <button id="sort-shifts-btn" onclick="toggleShiftsSort()" style="background:none;border:none;cursor:pointer;padding:4px 8px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;transition:background 0.15s;" title="Ordenar">
+        <span class="material-symbols-rounded" style="font-size:20px;">swap_vert</span>
+        <span id="sort-shifts-label">A–Z</span>
+      </button>
+    </div>
+    <div class="scroll-area">
+      <div class="shifts-list">
+        <div class="shifts-card" id="shifts-list-container"></div>
+      </div>
+      <div style="height:100px;"></div>
+    </div>
+    <!-- FAB en vista turnos — esquina inferior derecha -->
+    <button id="fab-turnos" onclick="openModal('modal-nuevo-turno')" style="position:fixed;bottom:calc(env(safe-area-inset-bottom) + 72px);right:20px;width:52px;height:52px;border-radius:50%;background-color:var(--fab-bg);color:var(--fab-text);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:var(--shadow-lg);border:none;z-index:100;">
+      <span class="material-symbols-rounded" style="font-size:26px;">add</span>
+    </button>
+  </div>
+
+  <!-- ============================================================
+       VISTA 4: AJUSTES
+       ============================================================ -->
+  <div class="view" id="view-ajustes">
+    <div class="view-header">
+      <div class="view-title">Ajustes</div>
+    </div>
+    <div class="scroll-area">
+      <!-- Apariencia -->
+      <div class="settings-section">
+        <div class="settings-section-title">Apariencia</div>
+        <div class="settings-card">
+          <div class="settings-item" style="cursor:default;">
+            <span class="settings-item-label">
+              <span class="material-symbols-rounded">contrast</span>
+              Tema
+            </span>
+            <div class="segmented-control" id="theme-control">
+              <button class="segment-btn" data-theme="light" onclick="setTheme('light')">Claro</button>
+              <button class="segment-btn active" data-theme="auto" onclick="setTheme('auto')">Auto</button>
+              <button class="segment-btn" data-theme="dark" onclick="setTheme('dark')">Oscuro</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendario -->
+      <div class="settings-section">
+        <div class="settings-section-title">Calendario</div>
+        <div class="settings-card">
+          <div class="settings-item" style="cursor:default;">
+            <span class="settings-item-label">
+              <span class="material-symbols-rounded">calendar_today</span>
+              Primer día de la semana
+            </span>
+            <div class="segmented-control" id="weekstart-control">
+              <button class="segment-btn" data-start="0" onclick="setWeekStart(0)">Dom</button>
+              <button class="segment-btn active" data-start="1" onclick="setWeekStart(1)">Lun</button>
+            </div>
+          </div>
+          <div class="settings-item" style="cursor:default;">
+            <span class="settings-item-label">
+              <span class="material-symbols-rounded">view_agenda</span>
+              Máx. turnos visibles/día (1–3)
+            </span>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <button onclick="changeMaxShifts(-1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;">−</button>
+              <span id="max-shifts-val" style="font-size:15px;font-weight:600;min-width:20px;text-align:center;">3</span>
+              <button onclick="changeMaxShifts(1)" style="width:28px;height:28px;border-radius:50%;border:1px solid var(--border);background:var(--bg-primary);color:var(--text-primary);cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;">+</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supabase -->
+      <div class="settings-section">
+        <div class="settings-section-title">Base de datos</div>
+        <div class="settings-card">
+          <div class="settings-item" style="cursor:default;flex-direction:column;align-items:flex-start;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+              <span class="settings-item-label">
+                <span class="material-symbols-rounded">database</span>
+                Supabase
+              </span>
+              <span id="supabase-status-badge" class="supabase-status disconnected">
+                <span class="status-dot"></span> No conectado
+              </span>
+            </div>
+            <div style="width:100%;">
+              <div class="form-group" style="margin-bottom:10px;">
+                <label class="form-label">URL del proyecto</label>
+                <input type="text" class="form-input" id="supa-url" placeholder="https://xxxx.supabase.co" autocomplete="off">
+              </div>
+              <div class="form-group" style="margin-bottom:12px;">
+                <label class="form-label">Anon Key</label>
+                <input type="password" class="form-input" id="supa-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6...">
+              </div>
+              <div id="supabase-error-msg" style="font-size:12px;color:var(--weekend);margin-bottom:8px;min-height:16px;"></div>
+              <button id="btn-supa-connect" class="btn-primary" onclick="saveSupabaseConfig()">Guardar y conectar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Acerca de -->
+      <div class="settings-section">
+        <div class="settings-section-title">Acerca de</div>
+        <div class="settings-card">
+          <div class="settings-item" style="cursor:default;">
+            <span class="settings-item-label">
+              <span class="material-symbols-rounded">info</span>
+              Versión
+            </span>
+            <span class="settings-item-value">1.0.0</span>
+          </div>
+          <div class="settings-item" style="cursor:default;">
+            <span class="settings-item-label">
+              <span class="material-symbols-rounded">schedule</span>
+              Zona horaria
+            </span>
+            <span class="settings-item-value">America/Bogotá</span>
+          </div>
+        </div>
+      </div>
+      <div style="height:20px;"></div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       BARRA DE NAVEGACIÓN INFERIOR
+       ============================================================ -->
+  <nav id="nav-bar">
+    <div class="nav-item active" id="nav-calendario" onclick="switchView('calendario')">
+      <span class="material-symbols-rounded filled">calendar_month</span>
+      <span class="nav-label">Calendario</span>
+    </div>
+    <div class="nav-item" id="nav-informes" onclick="switchView('informes')">
+      <span class="material-symbols-rounded">bar_chart</span>
+      <span class="nav-label">Informes</span>
+    </div>
+    <div class="nav-item" id="nav-turnos" onclick="switchView('turnos')">
+      <span class="material-symbols-rounded">badge</span>
+      <span class="nav-label">Turnos</span>
+    </div>
+    <div class="nav-item" id="nav-ajustes" onclick="switchView('ajustes')">
+      <span class="material-symbols-rounded">tune</span>
+      <span class="nav-label">Más</span>
+    </div>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ============================================================
+     FAB CALENDARIO
+     ============================================================ -->
+<button id="fab-btn" onclick="toggleEditMode()">
+  <span class="material-symbols-rounded" id="fab-icon" style="font-size:24px;">edit_calendar</span>
+</button>
+
+<!-- ============================================================
+     BARRA DE EDICIÓN
+     ============================================================ -->
+<div id="edit-bar">
+  <div class="edit-bar-label">Selecciona un turno</div>
+  <div id="edit-bar-scroll"></div>
+</div>
+
+<!-- ============================================================
+     OVERLAY Y TARJETA DE DÍA
+     ============================================================ -->
+<div id="day-sheet-overlay" onclick="closeDaySheet()"></div>
+<div id="day-sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <div class="sheet-date" id="sheet-date-label"></div>
+  </div>
+  <div class="sheet-scroll" id="sheet-content"></div>
+  <div class="sheet-actions">
+    <button class="sheet-action-btn" onclick="openAddShiftFromSheet()">
+      <span class="material-symbols-rounded" style="font-size:18px;">add</span>
+      Turno
+    </button>
+    <button class="sheet-action-btn" onclick="openAddEventFromSheet()">
+      <span class="material-symbols-rounded" style="font-size:18px;">event</span>
+      Evento
+    </button>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: NUEVO TURNO
+     ============================================================ -->
+<div class="modal-overlay" id="modal-nuevo-turno" onclick="handleModalOverlayClick(event,'modal-nuevo-turno')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-turno-title">Nuevo Turno</span>
+      <button class="modal-close" onclick="closeModal('modal-nuevo-turno')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll">
+      <input type="hidden" id="edit-shift-id">
+      <div class="form-group">
+        <label class="form-label">Lugar</label>
+        <input type="text" class="form-input" id="shift-lugar" placeholder="Ej: ESE, Hospital, Clínica...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Nombre del turno</label>
+        <input type="text" class="form-input" id="shift-nombre" placeholder="Ej: Presencial, Disponibilidad...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Todo el día</label>
+        <div class="form-toggle" onclick="toggleAllDay()">
+          <span class="form-toggle-label">Todo el día</span>
+          <div class="toggle-switch" id="allday-toggle"></div>
+        </div>
+      </div>
+      <div class="form-row" id="time-fields">
+        <div class="form-group">
+          <label class="form-label">Hora inicio</label>
+          <input type="time" class="form-input" id="shift-inicio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora fin</label>
+          <input type="time" class="form-input" id="shift-fin">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Color</label>
+        <div class="color-grid" id="color-grid"></div>
+        <button class="color-custom-btn" onclick="document.getElementById('color-custom-input').click()">
+          <span class="material-symbols-rounded" style="font-size:18px;">palette</span>
+          Color personalizado
+          <input type="color" id="color-custom-input" style="position:absolute;opacity:0;width:0;height:0;" onchange="selectCustomColor(this.value)">
+        </button>
+        <div id="selected-color-preview" style="margin-top:10px;display:none;align-items:center;gap:8px;">
+          <div id="selected-color-dot" style="width:16px;height:16px;border-radius:50%;"></div>
+          <span id="selected-color-hex" style="font-size:13px;color:var(--text-secondary);font-family:monospace;"></span>
+        </div>
+      </div>
+      <!-- Campo oculto: total horas calculado -->
+      <input type="hidden" id="shift-total-horas">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="saveShift()">Guardar turno</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: NUEVO / EDITAR EVENTO
+     ============================================================ -->
+<div class="modal-overlay" id="modal-nuevo-evento" onclick="handleModalOverlayClick(event,'modal-nuevo-evento')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-evento-title">Nuevo Evento</span>
+      <button class="modal-close" onclick="closeModal('modal-nuevo-evento')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll">
+      <div class="form-group">
+        <label class="form-label">Nombre del evento</label>
+        <input type="text" class="form-input" id="evento-nombre" placeholder="Ej: Entrega mensual, Reunión...">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha</label>
+        <input type="date" class="form-input" id="evento-fecha">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hora inicio</label>
+          <input type="time" class="form-input" id="evento-inicio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora fin</label>
+          <input type="time" class="form-input" id="evento-fin">
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <!-- data-evento-id se setea dinámicamente por openEditEvento / openAddEventFromSheet -->
+      <button class="btn-primary" id="btn-guardar-evento" onclick="saveEvento()">Guardar evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETALLE TURNO (editar/eliminar)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-detalle-turno" onclick="handleModalOverlayClick(event,'modal-detalle-turno')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Detalle del turno</span>
+      <button class="modal-close" onclick="closeModal('modal-detalle-turno')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll" id="detalle-turno-content"></div>
+    <div class="modal-footer" style="display:flex;gap:10px;">
+      <button class="btn-primary" style="background-color:var(--bg-primary);color:var(--weekend);border:1px solid var(--weekend);" onclick="deleteShiftFromDetail()">
+        <span style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <span class="material-symbols-rounded" style="font-size:18px;">delete</span> Eliminar
+        </span>
+      </button>
+      <button class="btn-primary" onclick="editShiftFromDetail()">
+        <span style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <span class="material-symbols-rounded" style="font-size:18px;">edit</span> Editar
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ============================================================
+     JAVASCRIPT
+     ============================================================ -->
+<script>
+/* ================================================================
+   SECCIÓN 1: ESTADO GLOBAL Y DATOS DEMO
+   ================================================================ */
+
+/**
+ * Estado principal de la aplicación.
+ * Toda la información de estado se centraliza aquí para facilitar
+ * la migración a un módulo separado en el futuro.
+ */
+const AppState = {
+  currentView: 'calendario',
+  currentDate: new Date(),
+  selectedDate: null,
+  editMode: false,
+  selectedShiftTemplate: null,
+  weekStart: 1,
+  maxShiftsPerDay: 3,
+  theme: 'auto',
+  supabaseConnected: false,
+  supabaseClient: null,
+  editingShiftId: null,
+  editingDetailShiftId: null,
+  informePeriod: { year: 2026, month: 2 },
+  shifts: [],
+  assignments: [],
+  events: [],
+  informes: [],
+};
+
+/**
+ * Colores disponibles en el selector de turnos (paleta de 20).
+ */
+const SHIFT_COLORS = [
+  '#FF4D6D','#FF6B35','#FF9F1C','#FFCA3A','#8AC926',
+  '#1982C4','#6A4C93','#C77DFF','#E040FB','#F72585',
+  '#06D6A0','#118AB2','#073B4C','#264653','#2A9D8F',
+  '#E9C46A','#F4A261','#E76F51','#3D405B','#81B29A',
+];
+
+/**
+ * Datos de demo: plantillas de turno.
+ * Formato: { id, lugar, nombre, inicio, fin, color, totalHoras, allDay }
+ */
+const DEMO_SHIFTS = [
+  { id: 'shift_1', lugar: 'ESE', nombre: 'Presencial',     inicio: '07:00', fin: '13:00', color: '#FF4D6D', totalHoras: 6,  allDay: false },
+  { id: 'shift_2', lugar: 'ESE', nombre: 'Disponibilidad', inicio: '13:00', fin: '07:00', color: '#1982C4', totalHoras: 18, allDay: false },
+  { id: 'shift_3', lugar: 'ESE', nombre: 'Consulta',       inicio: '13:00', fin: '18:00', color: '#06D6A0', totalHoras: 5,  allDay: false },
+  { id: 'shift_4', lugar: 'SR',  nombre: 'Revista',        inicio: '07:00', fin: '19:00', color: '#8AC926', totalHoras: 12, allDay: false },
+  { id: 'shift_5', lugar: 'SOG', nombre: 'Consulta',       inicio: '07:00', fin: '13:00', color: '#E040FB', totalHoras: 6,  allDay: false },
+  { id: 'shift_6', lugar: 'SOG', nombre: 'Programa',       inicio: '13:00', fin: '19:00', color: '#FF6B35', totalHoras: 6,  allDay: false },
+];
+
+/**
+ * Datos de demo: asignaciones de turnos a días específicos.
+ * Formato: { id, shiftId, fecha: 'YYYY-MM-DD' }
+ */
+const DEMO_ASSIGNMENTS = [
+  // Semana 1
+  { id: 'a1',  shiftId: 'shift_1', fecha: '2026-03-06' },
+  { id: 'a2',  shiftId: 'shift_2', fecha: '2026-03-06' },
+  { id: 'a3',  shiftId: 'shift_3', fecha: '2026-03-06' },
+  // Semana 2
+  { id: 'a4',  shiftId: 'shift_1', fecha: '2026-03-13' },
+  { id: 'a5',  shiftId: 'shift_2', fecha: '2026-03-13' },
+  { id: 'a6',  shiftId: 'shift_3', fecha: '2026-03-13' },
+  { id: 'a14', shiftId: 'shift_1', fecha: '2026-03-14' },
+  // Semana 3
+  { id: 'a7',  shiftId: 'shift_1', fecha: '2026-03-20' },
+  { id: 'a8',  shiftId: 'shift_2', fecha: '2026-03-20' },
+  { id: 'a9',  shiftId: 'shift_3', fecha: '2026-03-20' },
+  { id: 'a15', shiftId: 'shift_1', fecha: '2026-03-21' },
+  { id: 'a16', shiftId: 'shift_2', fecha: '2026-03-21' },
+  // Semana 4
+  { id: 'a10', shiftId: 'shift_1', fecha: '2026-03-22' },
+  { id: 'a11', shiftId: 'shift_2', fecha: '2026-03-22' },
+  { id: 'a17', shiftId: 'shift_1', fecha: '2026-03-27' },
+  { id: 'a18', shiftId: 'shift_2', fecha: '2026-03-27' },
+  { id: 'a19', shiftId: 'shift_3', fecha: '2026-03-27' },
+  { id: 'a20', shiftId: 'shift_4', fecha: '2026-03-28' },
+  { id: 'a21', shiftId: 'shift_5', fecha: '2026-03-28' },
+  // Semana 5
+  { id: 'a12', shiftId: 'shift_5', fecha: '2026-03-30' },
+  { id: 'a13', shiftId: 'shift_6', fecha: '2026-03-30' },
+];
+
+/**
+ * Datos de demo: eventos.
+ * Formato: { id, nombre, fecha: 'YYYY-MM-DD', inicio, fin }
+ */
+const DEMO_EVENTS = [
+  { id: 'ev1', nombre: 'Clase ped',   fecha: '2026-03-10', inicio: '08:00', fin: '10:00' },
+  { id: 'ev2', nombre: 'Clase ped',   fecha: '2026-03-11', inicio: '08:00', fin: '10:00' },
+  { id: 'ev3', nombre: 'Entrega M',   fecha: '2026-03-14', inicio: '09:00', fin: '11:00' },
+];
+
+/* ================================================================
+   SECCIÓN 2: ALMACENAMIENTO LOCAL
+   ================================================================ */
+
+const Storage = {
+  /**
+   * Lee todos los datos de la app desde localStorage.
+   * Si no hay datos, inicializa con los valores demo.
+   */
+  load() {
+    const raw = localStorage.getItem('turnoshift_data');
+    if (raw) {
+      try {
+        const data = JSON.parse(raw);
+        Storage._applyData(data);
+      } catch(e) {
+        console.error('Error leyendo localStorage', e);
+        Storage.initDemo();
+      }
+    } else {
+      Storage.initDemo();
+    }
+
+    // Configuración separada
+    const cfg = localStorage.getItem('turnoshift_config');
+    if (cfg) {
+      try {
+        const c = JSON.parse(cfg);
+        AppState.weekStart        = c.weekStart        ?? 1;
+        AppState.maxShiftsPerDay  = c.maxShiftsPerDay  ?? 3;
+        AppState.theme            = c.theme            ?? 'auto';
+      } catch(e) {}
+    }
+
+    // Credenciales Supabase
+    const supaRaw = localStorage.getItem('turnoshift_supabase');
+    if (supaRaw) {
+      try {
+        const s = JSON.parse(supaRaw);
+        document.getElementById('supa-url').value = s.url || '';
+        document.getElementById('supa-key').value = s.key || '';
+        if (s.url && s.key) {
+          initSupabase(s.url, s.key);
+        }
+      } catch(e) {}
+    }
+  },
+
+  /** Inicializa con datos de demo. */
+  initDemo() {
+    AppState.shifts      = [...DEMO_SHIFTS];
+    AppState.assignments = [...DEMO_ASSIGNMENTS];
+    AppState.events      = [...DEMO_EVENTS];
+    AppState.informes    = DEMO_INFORMES.map(i => ({...i}));
+    Storage.save();
+  },
+
+  _applyData(data) {
+    AppState.shifts      = data.shifts      || [];
+    AppState.assignments = data.assignments || [];
+    AppState.events      = data.events      || [];
+    AppState.informes    = data.informes    || [];
+  },
+
+  /** Persiste todos los datos en localStorage. */
+  save() {
+    localStorage.setItem('turnoshift_data', JSON.stringify({
+      shifts:      AppState.shifts,
+      assignments: AppState.assignments,
+      events:      AppState.events,
+      informes:    AppState.informes,
+    }));
+  },
+
+  /** Persiste la configuración. */
+  saveConfig() {
+    localStorage.setItem('turnoshift_config', JSON.stringify({
+      weekStart:       AppState.weekStart,
+      maxShiftsPerDay: AppState.maxShiftsPerDay,
+      theme:           AppState.theme,
+    }));
+  },
+
+  /** Persiste credenciales de Supabase. */
+  saveSupabase(url, key) {
+    localStorage.setItem('turnoshift_supabase', JSON.stringify({ url, key }));
+  },
+};
+
+/* ================================================================
+   SECCIÓN 3: SUPABASE — CONEXIÓN Y CAPA DE DATOS
+   ================================================================
+   Cuando Supabase está conectado, TODAS las operaciones de lectura
+   y escritura van a la base de datos. El localStorage solo se usa
+   como fallback cuando no hay conexión.
+
+   Mapeo de tablas:
+     AppState.shifts      ↔ public.turnos
+     AppState.assignments ↔ public.asignaciones
+     AppState.events      ↔ public.eventos
+     AppState.informes    ↔ public.informes
+   ================================================================ */
+
+/* ================================================================
+   SECCIÓN 3: SUPABASE — CONEXIÓN Y CAPA DE DATOS
+   ================================================================
+   Sin autenticación explícita, se usa un device_id persistente
+   como user_id para identificar al usuario en Supabase.
+   RLS debe configurarse para aceptar este campo libre, o bien
+   desactivar RLS en el dashboard de Supabase para estas tablas.
+
+   Mapeo:
+     AppState.shifts      ↔ public.turnos
+     AppState.assignments ↔ public.asignaciones
+     AppState.events      ↔ public.eventos
+     AppState.informes    ↔ public.informes
+   ================================================================ */
+
+/**
+ * Obtiene o genera un device_id único y persistente para este dispositivo.
+ * Se usa como user_id en todas las operaciones de Supabase.
+ */
+function getDeviceId() {
+  let id = localStorage.getItem('turnoshift_device_id');
+  if (!id) {
+    id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+    localStorage.setItem('turnoshift_device_id', id);
+  }
+  return id;
+}
+
+const DB = {
+  async testConnection() {
+    if (!AppState.supabaseClient) return { ok: false, error: 'Sin cliente' };
+    try {
+      const { error } = await AppState.supabaseClient
+        .from('turnos').select('id').limit(1);
+      if (error) return { ok: false, error: error.message };
+      return { ok: true, error: null };
+    } catch(e) {
+      return { ok: false, error: e.message };
+    }
+  },
+
+  async loadAll() {
+    const sb  = AppState.supabaseClient;
+    const uid = getDeviceId();
+
+    const [t, a, e, i] = await Promise.all([
+      sb.from('turnos').select('*').eq('user_id', uid),
+      sb.from('asignaciones').select('*').eq('user_id', uid),
+      sb.from('eventos').select('*').eq('user_id', uid),
+      sb.from('informes').select('*').eq('user_id', uid),
+    ]);
+
+    if (t.error || a.error || e.error || i.error) {
+      console.error('Error cargando:', t.error || a.error || e.error || i.error);
+      return false;
+    }
+
+    AppState.shifts = (t.data || []).map(r => ({
+      id: r.id, lugar: r.lugar, nombre: r.nombre,
+      inicio: r.inicio, fin: r.fin, allDay: r.all_day,
+      totalHoras: parseFloat(r.total_horas), color: r.color,
+    }));
+
+    AppState.assignments = (a.data || []).map(r => ({
+      id: r.id, shiftId: r.turno_id, fecha: r.fecha,
+      overrideInicio: r.override_inicio,
+      overrideFin:    r.override_fin,
+      overrideAllDay: r.override_all_day,
+      overrideHoras:  r.override_horas !== null ? parseFloat(r.override_horas) : undefined,
+    }));
+
+    AppState.events = (e.data || []).map(r => ({
+      id: r.id, nombre: r.nombre, fecha: r.fecha, inicio: r.inicio, fin: r.fin,
+    }));
+
+    AppState.informes = (i.data || []).map(r => ({
+      id: r.id, titulo: r.titulo,
+      turnoIds:    r.turno_ids    || [],
+      salarioBase: r.salario_base || { nombre: 'Salario por hora', valorHora: 0 },
+      pagosExtra:  r.pagos_extra  || [],
+      pagosFijos:  r.pagos_fijos  || [],
+    }));
+
+    return true;
+  },
+
+  async upsertShift(shift) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient.from('turnos').upsert({
+      id: shift.id, user_id: getDeviceId(),
+      lugar: shift.lugar, nombre: shift.nombre,
+      inicio: shift.inicio, fin: shift.fin,
+      all_day: shift.allDay, total_horas: shift.totalHoras, color: shift.color,
+    }, { onConflict: 'id' });
+    if (error) { console.error('upsertShift:', error.message); throw error; }
+  },
+
+  async deleteShift(id) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient
+      .from('turnos').delete().eq('id', id).eq('user_id', getDeviceId());
+    if (error) { console.error('deleteShift:', error.message); throw error; }
+  },
+
+  async upsertAssignment(a) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient.from('asignaciones').upsert({
+      id: a.id, user_id: getDeviceId(), turno_id: a.shiftId, fecha: a.fecha,
+      override_inicio:  a.overrideInicio  ?? null,
+      override_fin:     a.overrideFin     ?? null,
+      override_all_day: a.overrideAllDay  ?? null,
+      override_horas:   a.overrideHoras   ?? null,
+    }, { onConflict: 'id' });
+    if (error) { console.error('upsertAssignment:', error.message); throw error; }
+  },
+
+  async deleteAssignment(id) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient
+      .from('asignaciones').delete().eq('id', id).eq('user_id', getDeviceId());
+    if (error) { console.error('deleteAssignment:', error.message); throw error; }
+  },
+
+  async deleteAssignmentsByShift(shiftId) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient
+      .from('asignaciones').delete().eq('turno_id', shiftId).eq('user_id', getDeviceId());
+    if (error) { console.error('deleteAssignmentsByShift:', error.message); throw error; }
+  },
+
+  async upsertEvento(ev) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient.from('eventos').upsert({
+      id: ev.id, user_id: getDeviceId(),
+      nombre: ev.nombre, fecha: ev.fecha, inicio: ev.inicio, fin: ev.fin,
+    }, { onConflict: 'id' });
+    if (error) { console.error('upsertEvento:', error.message); throw error; }
+  },
+
+  async deleteEvento(id) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient
+      .from('eventos').delete().eq('id', id).eq('user_id', getDeviceId());
+    if (error) { console.error('deleteEvento:', error.message); throw error; }
+  },
+
+  async upsertInforme(inf) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient.from('informes').upsert({
+      id: inf.id, user_id: getDeviceId(),
+      titulo: inf.titulo, turno_ids: inf.turnoIds,
+      salario_base: inf.salarioBase, pagos_extra: inf.pagosExtra, pagos_fijos: inf.pagosFijos,
+    }, { onConflict: 'id' });
+    if (error) { console.error('upsertInforme:', error.message); throw error; }
+  },
+
+  async deleteInforme(id) {
+    if (!AppState.supabaseClient) return;
+    const { error } = await AppState.supabaseClient
+      .from('informes').delete().eq('id', id).eq('user_id', getDeviceId());
+    if (error) { console.error('deleteInforme:', error.message); throw error; }
+  },
+};
+
+/**
+ * Persistencia unificada.
+ * Siempre guarda en localStorage. Si Supabase está conectado, también sincroniza allá.
+ */
+async function persist(type, op, payload) {
+  Storage.save();  // siempre local primero
+  if (!AppState.supabaseConnected) return;
+  try {
+    if      (type === 'shift'      && op === 'upsert') await DB.upsertShift(payload);
+    else if (type === 'shift'      && op === 'delete') await DB.deleteShift(payload);
+    else if (type === 'assignment' && op === 'upsert') await DB.upsertAssignment(payload);
+    else if (type === 'assignment' && op === 'delete') await DB.deleteAssignment(payload);
+    else if (type === 'evento'     && op === 'upsert') await DB.upsertEvento(payload);
+    else if (type === 'evento'     && op === 'delete') await DB.deleteEvento(payload);
+    else if (type === 'informe'    && op === 'upsert') await DB.upsertInforme(payload);
+    else if (type === 'informe'    && op === 'delete') await DB.deleteInforme(payload);
+  } catch(e) {
+    showToast('⚠️ Error sincronizando: ' + e.message, 'error');
+  }
+}
+
+/**
+ * Inicializa Supabase, verifica conexión y carga datos remotos.
+ * Con showFeedback = true muestra toasts de resultado.
+ */
+async function initSupabase(url, key, showFeedback = false) {
+  const btn = document.getElementById('btn-supa-connect');
+  if (btn) { btn.disabled = true; btn.textContent = 'Conectando...'; }
+
+  try {
+    AppState.supabaseClient = supabase.createClient(url, key, {
+      global: {
+        headers: {
+          'apikey': key,
+          'Authorization': 'Bearer ' + key,
+        }
+      }
+    });
+    const { ok, error } = await DB.testConnection();
+
+    if (!ok) {
+      AppState.supabaseConnected = false;
+      AppState.supabaseClient = null;
+      let userMsg = error || 'Error desconocido';
+      if (userMsg.includes('401') || userMsg.toLowerCase().includes('unauthorized')) {
+        userMsg = '401 No autorizado — Verifica que el Anon Key sea correcto y que RLS esté desactivado en las tablas (ver SQL).';
+      } else if (userMsg.includes('Failed to fetch') || userMsg.includes('NetworkError')) {
+        userMsg = 'No se pudo alcanzar el servidor — Verifica la URL del proyecto.';
+      }
+      updateSupabaseStatus(false, userMsg);
+      if (showFeedback) showToast('❌ ' + userMsg, 'error');
+      return;
+    }
+
+    AppState.supabaseConnected = true;
+    updateSupabaseStatus(true);
+
+    // Cargar datos desde Supabase y limpiar localStorage
+    const loaded = await DB.loadAll();
+    if (loaded) {
+      localStorage.removeItem('turnoshift_data');
+      if (showFeedback) showToast('✅ Conectado a Supabase. Datos cargados.', 'success');
+      renderCalendar();
+      renderShiftsList();
+      renderInformes();
+    } else {
+      if (showFeedback) showToast('✅ Conectado. Sin datos remotos aún.', 'success');
+    }
+
+  } catch(e) {
+    AppState.supabaseConnected = false;
+    AppState.supabaseClient = null;
+    updateSupabaseStatus(false, e.message);
+    if (showFeedback) showToast('❌ Error: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar y conectar'; }
+  }
+}
+
+function updateSupabaseStatus(connected, errorMsg) {
+  const badge = document.getElementById('supabase-status-badge');
+  if (!badge) return;
+  badge.className = 'supabase-status ' + (connected ? 'connected' : 'disconnected');
+  badge.innerHTML = `<span class="status-dot"></span> ${connected ? 'Conectado' : 'No conectado'}`;
+  const errEl = document.getElementById('supabase-error-msg');
+  if (errEl) errEl.textContent = (!connected && errorMsg) ? errorMsg : '';
+}
+
+async function saveSupabaseConfig() {
+  const url = document.getElementById('supa-url').value.trim();
+  const key = document.getElementById('supa-key').value.trim();
+  if (!url || !key) {
+    alert('Por favor completa la URL y la clave de Supabase.');
+    return;
+  }
+  Storage.saveSupabase(url, key);
+  await initSupabase(url, key, true);
+}
+
+function showToast(msg, type = 'success') {
+  const existing = document.getElementById('ts-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.id = 'ts-toast';
+  const bg = type === 'success' ? '#22C55E' : '#EF4444';
+  toast.style.cssText = `
+    position:fixed; bottom:calc(env(safe-area-inset-bottom) + 90px); left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:${bg}; color:#fff; padding:10px 20px; border-radius:20px;
+    font-size:14px; font-weight:600; font-family:'DM Sans',sans-serif;
+    box-shadow:0 4px 20px rgba(0,0,0,0.25); z-index:9999;
+    opacity:0; transition:opacity 0.25s ease, transform 0.25s ease;
+    max-width:320px; text-align:center;
+  `;
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  }));
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(10px)';
+    setTimeout(() => toast.remove(), 300);
+  }, 3500);
+}
+
+/* ================================================================
+   SECCIÓN 4: NAVEGACIÓN ENTRE VISTAS
+   ================================================================ */
+
+/**
+ * Cambia la vista activa y actualiza la barra de navegación.
+ * @param {string} viewName - 'calendario' | 'informes' | 'turnos' | 'ajustes'
+ */
+function switchView(viewName) {
+  if (AppState.editMode && viewName !== 'calendario') exitEditMode();
+
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('view-' + viewName).classList.add('active');
+  document.getElementById('nav-' + viewName).classList.add('active');
+
+  // FABs: mostrar solo el de la vista activa
+  document.getElementById('fab-btn').style.display        = viewName === 'calendario' ? 'flex' : 'none';
+  document.getElementById('fab-turnos').style.display     = viewName === 'turnos'     ? 'flex' : 'none';
+  document.getElementById('fab-informes').style.display   = viewName === 'informes'   ? 'flex' : 'none';
+
+  AppState.currentView = viewName;
+
+  if (viewName === 'calendario') renderCalendar();
+  if (viewName === 'turnos')     renderShiftsList();
+  if (viewName === 'informes')   renderInformes();
+  if (viewName === 'ajustes')    syncSettingsUI();
+}
+
+/* ================================================================
+   SECCIÓN 5: CALENDARIO
+   ================================================================ */
+
+const MONTHS_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio',
+                   'Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DAYS_ES_LONG  = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const DAYS_ES_SHORT = ['D','L','M','M','J','V','S'];
+
+/**
+ * Convierte una hora 'HH:MM' a minutos desde medianoche para comparación.
+ * Los turnos que cruzan medianoche (fin < inicio) se tratan con inicio normal.
+ */
+function timeToMinutes(timeStr) {
+  if (!timeStr) return 0;
+  const [h, m] = timeStr.split(':').map(Number);
+  return h * 60 + m;
+}
+
+/**
+ * Renderiza el calendario del mes actual.
+ * - Turnos ordenados por hora de inicio (más temprano primero)
+ * - Máximo 5 chips de turnos visibles (el resto en tarjeta de día)
+ * - Eventos debajo de los turnos
+ * - Respeta la configuración de primer día de semana
+ */
+function renderCalendar() {
+  const d = AppState.currentDate;
+  const year  = d.getFullYear();
+  const month = d.getMonth();
+
+  // Actualizar título
+  document.getElementById('cal-month-title').textContent = MONTHS_ES[month];
+
+  const grid = document.getElementById('calendar-grid');
+  grid.innerHTML = '';
+
+  const today     = new Date();
+  const todayStr  = dateToStr(today);
+
+  // ── Cabecera de días de la semana ──
+  const ws = AppState.weekStart;
+  for (let i = 0; i < 7; i++) {
+    const dayIdx = (ws + i) % 7;
+    const el = document.createElement('div');
+    el.className = 'cal-weekday' + (dayIdx === 0 || dayIdx === 6 ? ' weekend' : '');
+    el.textContent = DAYS_ES_SHORT[dayIdx];
+    grid.appendChild(el);
+  }
+
+  // ── Calcular offset del primer día del mes ──
+  const firstDay    = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  let offset = (firstDay - ws + 7) % 7;
+
+  // Celdas vacías iniciales
+  for (let i = 0; i < offset; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  // ── Días del mes ──
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr   = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const jsDate    = new Date(year, month, day);
+    const dayOfWeek = jsDate.getDay();
+    const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+    const isToday   = dateStr === todayStr;
+
+    const cell = document.createElement('div');
+    cell.className = 'cal-day' + (isWeekend ? ' weekend' : '') + (isToday ? ' today' : '');
+    cell.dataset.date = dateStr;
+    cell.onclick = () => handleDayClick(dateStr);
+
+    // Número del día
+    const numEl = document.createElement('div');
+    numEl.className = 'day-num';
+    numEl.textContent = day;
+    cell.appendChild(numEl);
+
+    // Turnos asignados a este día, ordenados por hora de inicio
+    const dayAssignments = AppState.assignments
+      .filter(a => a.fecha === dateStr)
+      .map(a => ({ assignment: a, shift: AppState.shifts.find(s => s.id === a.shiftId) }))
+      .filter(x => x.shift)
+      .sort((a, b) => {
+        const ma = a.assignment.overrideInicio
+          ? timeToMinutes(a.assignment.overrideInicio)
+          : timeToMinutes(a.shift.inicio);
+        const mb = b.assignment.overrideInicio
+          ? timeToMinutes(b.assignment.overrideInicio)
+          : timeToMinutes(b.shift.inicio);
+        return ma - mb;
+      });
+
+    // Máximo configurable pero hardcap en 5
+    const max = Math.min(AppState.maxShiftsPerDay, 3);
+
+    dayAssignments.slice(0, max).forEach(({ assignment, shift }) => {
+      if (AppState.editMode && AppState.selectedShiftTemplate === shift.id) {
+        cell.style.outline = '2px solid ' + shift.color;
+      }
+      const chip = document.createElement('div');
+      chip.className = 'shift-chip';
+      chip.style.backgroundColor = shift.color;
+      chip.textContent = `${shift.lugar} - ${shift.nombre}`;
+      chip.title = `${shift.lugar} - ${shift.nombre}`;
+      cell.appendChild(chip);
+    });
+
+    // Eventos del día (solo texto/punto, DEBAJO de los turnos)
+    const dayEvents = AppState.events.filter(ev => ev.fecha === dateStr);
+    const maxEventos = Math.max(0, 2 - Math.max(0, dayAssignments.length - max));
+    dayEvents.slice(0, maxEventos).forEach(ev => {
+      const dot = document.createElement('div');
+      dot.className = 'event-dot';
+      dot.textContent = ev.nombre;
+      cell.appendChild(dot);
+    });
+
+    // Indicador "+N más" (turnos ocultos + eventos ocultos)
+    const extraShifts = Math.max(0, dayAssignments.length - max);
+    const extraEvents = Math.max(0, dayEvents.length - maxEventos);
+    const extra = extraShifts + extraEvents;
+    if (extra > 0) {
+      const moreEl = document.createElement('div');
+      moreEl.className = 'more-indicator';
+      moreEl.textContent = `+${extra} más`;
+      cell.appendChild(moreEl);
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+/**
+ * Maneja el toque en un día del calendario.
+ * En modo edición: asigna/desasigna el turno seleccionado.
+ * En modo normal: abre la tarjeta de día.
+ */
+function handleDayClick(dateStr) {
+  if (AppState.editMode) {
+    if (!AppState.selectedShiftTemplate) return;
+    toggleShiftAssignment(dateStr, AppState.selectedShiftTemplate);
+    renderCalendar();
+  } else {
+    openDaySheet(dateStr);
+  }
+}
+
+/**
+ * Asigna o desasigna un turno en una fecha específica.
+ */
+function toggleShiftAssignment(dateStr, shiftId) {
+  const existing = AppState.assignments.find(a => a.fecha === dateStr && a.shiftId === shiftId);
+  if (existing) {
+    AppState.assignments = AppState.assignments.filter(a => a.id !== existing.id);
+    persist('assignment', 'delete', existing.id);
+  } else {
+    const newA = {
+      id: genUUID(),
+      shiftId,
+      fecha: dateStr,
+    };
+    AppState.assignments.push(newA);
+    persist('assignment', 'upsert', newA);
+  }
+}
+
+/* ── Swipe para cambiar de mes ── */
+let touchStartX = 0;
+let touchStartY = 0;
+
+document.getElementById('cal-swipe-area').addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.getElementById('cal-swipe-area').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+    if (dx < 0) navigateMonth(1);
+    else navigateMonth(-1);
+  }
+}, { passive: true });
+
+/**
+ * Avanza o retrocede el mes mostrado con animación de deslizamiento.
+ * @param {number} delta - +1 avanza, -1 retrocede
+ */
+function navigateMonth(delta) {
+  const d = AppState.currentDate;
+  AppState.currentDate = new Date(d.getFullYear(), d.getMonth() + delta, 1);
+
+  const grid = document.getElementById('calendar-grid');
+  const animClass = delta > 0 ? 'anim-right' : 'anim-left';
+  grid.classList.remove('anim-right', 'anim-left');
+  // forzar reflow para reiniciar la animación
+  void grid.offsetWidth;
+  renderCalendar();
+  grid.classList.add(animClass);
+  grid.addEventListener('animationend', () => grid.classList.remove(animClass), { once: true });
+}
+
+/* ================================================================
+   SECCIÓN 6: MODO EDICIÓN DEL CALENDARIO
+   ================================================================ */
+
+function toggleEditMode() {
+  if (AppState.editMode) exitEditMode();
+  else enterEditMode();
+}
+
+function enterEditMode() {
+  AppState.editMode = true;
+  AppState.selectedShiftTemplate = null;
+
+  // Cambiar FAB
+  const fab = document.getElementById('fab-btn');
+  fab.classList.add('edit-mode');
+  document.getElementById('fab-icon').textContent = 'close';
+
+  // Ocultar nav bar
+  document.getElementById('nav-bar').classList.add('hidden-nav');
+
+  // Mostrar barra de edición
+  renderEditBar();
+  document.getElementById('edit-bar').classList.add('visible');
+  document.getElementById('edit-bar').style.bottom = '0';
+
+  renderCalendar();
+}
+
+function exitEditMode() {
+  AppState.editMode = false;
+  AppState.selectedShiftTemplate = null;
+
+  // Restaurar FAB
+  const fab = document.getElementById('fab-btn');
+  fab.classList.remove('edit-mode');
+  document.getElementById('fab-icon').textContent = 'edit_calendar';
+
+  // Mostrar nav bar
+  document.getElementById('nav-bar').classList.remove('hidden-nav');
+
+  // Ocultar barra de edición
+  document.getElementById('edit-bar').classList.remove('visible');
+
+  renderCalendar();
+}
+
+/**
+ * Renderiza la barra de chips de turnos en modo edición.
+ */
+function renderEditBar() {
+  const container = document.getElementById('edit-bar-scroll');
+  container.innerHTML = '';
+
+  AppState.shifts.forEach(shift => {
+    const initials = getInitials(shift.lugar);
+    const chip = document.createElement('div');
+    chip.className = 'edit-shift-chip' + (AppState.selectedShiftTemplate === shift.id ? ' selected' : '');
+    chip.onclick = () => selectEditShift(shift.id);
+    chip.innerHTML = `
+      <div class="edit-shift-avatar" style="background-color:${shift.color}">${initials}</div>
+      <div class="edit-shift-name">${shift.lugar} - ${shift.nombre}</div>
+    `;
+    container.appendChild(chip);
+  });
+
+  // Botón "Nuevo turno"
+  const addBtn = document.createElement('div');
+  addBtn.className = 'edit-add-btn';
+  addBtn.onclick = () => openModal('modal-nuevo-turno');
+  addBtn.innerHTML = `
+    <div class="edit-add-circle">
+      <span class="material-symbols-rounded" style="font-size:20px;">add</span>
+    </div>
+    <div class="edit-add-label">Nuevo turno</div>
+  `;
+  container.appendChild(addBtn);
+}
+
+function selectEditShift(shiftId) {
+  AppState.selectedShiftTemplate = AppState.selectedShiftTemplate === shiftId ? null : shiftId;
+  renderEditBar();
+  renderCalendar();
+}
+
+/* ================================================================
+   SECCIÓN 7: TARJETA DE DÍA (BOTTOM SHEET)
+   ================================================================ */
+
+function openDaySheet(dateStr) {
+  AppState.selectedDate = dateStr;
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(year, month-1, day);
+  const dayName = DAYS_ES_LONG[date.getDay()];
+  const monthName = MONTHS_ES[month-1];
+
+  document.getElementById('sheet-date-label').textContent =
+    `${dayName}, ${day} de ${monthName} de ${year}`;
+
+  renderSheetContent(dateStr);
+
+  document.getElementById('day-sheet-overlay').classList.add('visible');
+  document.getElementById('day-sheet').classList.add('visible');
+}
+
+function closeDaySheet() {
+  document.getElementById('day-sheet-overlay').classList.remove('visible');
+  document.getElementById('day-sheet').classList.remove('visible');
+  AppState.selectedDate = null;
+}
+
+function renderSheetContent(dateStr) {
+  const container = document.getElementById('sheet-content');
+  container.innerHTML = '';
+
+  // ── Turnos del día, ordenados por hora de inicio ──
+  const dayAssignments = AppState.assignments
+    .filter(a => a.fecha === dateStr)
+    .map(a => ({ assignment: a, shift: AppState.shifts.find(s => s.id === a.shiftId) }))
+    .filter(x => x.shift)
+    .sort((a, b) => {
+      const ma = a.assignment.overrideInicio
+        ? timeToMinutes(a.assignment.overrideInicio)
+        : timeToMinutes(a.shift.inicio);
+      const mb = b.assignment.overrideInicio
+        ? timeToMinutes(b.assignment.overrideInicio)
+        : timeToMinutes(b.shift.inicio);
+      return ma - mb;
+    });
+
+  const titleTurnos = document.createElement('div');
+  titleTurnos.className = 'sheet-section-title';
+  titleTurnos.textContent = 'Turnos';
+  container.appendChild(titleTurnos);
+
+  if (dayAssignments.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'sheet-empty';
+    empty.textContent = 'Sin turnos asignados';
+    container.appendChild(empty);
+  } else {
+    dayAssignments.forEach(({ assignment, shift }) => {
+      // Horario efectivo: override del día o el de la plantilla
+      const efectivoInicio = assignment.overrideInicio || shift.inicio;
+      const efectivoFin    = assignment.overrideFin    || shift.fin;
+      const efectivoAllDay = assignment.overrideAllDay !== undefined ? assignment.overrideAllDay : shift.allDay;
+      const efectivoHoras  = assignment.overrideHoras  !== undefined ? assignment.overrideHoras  : shift.totalHoras;
+
+      const item = document.createElement('div');
+      item.className = 'sheet-shift-item';
+      item.style.cursor = 'pointer';
+
+      const avatarDiv = document.createElement('div');
+      avatarDiv.className = 'sheet-shift-avatar';
+      avatarDiv.style.backgroundColor = shift.color;
+      avatarDiv.textContent = getInitials(shift.lugar);
+
+      const infoDiv = document.createElement('div');
+      infoDiv.className = 'sheet-shift-info';
+      infoDiv.innerHTML = `
+        <div class="sheet-shift-name">${shift.lugar} - ${shift.nombre}</div>
+        <div class="sheet-shift-time">${efectivoAllDay ? 'Todo el día' : formatTime(efectivoInicio) + ' – ' + formatTime(efectivoFin)}</div>
+      `;
+
+      const horasDiv = document.createElement('div');
+      horasDiv.className = 'sheet-shift-hours';
+      horasDiv.textContent = efectivoHoras + 'h';
+
+      // Botón editar horario de este día
+      const editBtn = document.createElement('button');
+      editBtn.title = 'Editar horario solo este día';
+      editBtn.style.cssText = 'background:none;border:none;cursor:pointer;padding:4px;color:var(--text-secondary);display:flex;align-items:center;';
+      editBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">schedule</span>';
+      editBtn.onclick = (e) => {
+        e.stopPropagation();
+        openOverrideModal(assignment.id, dateStr);
+      };
+
+      // Botón eliminar asignación de este día
+      const delBtn = document.createElement('button');
+      delBtn.title = 'Quitar turno de este día';
+      delBtn.style.cssText = 'background:none;border:none;cursor:pointer;padding:4px;color:var(--weekend);display:flex;align-items:center;';
+      delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">remove_circle</span>';
+      delBtn.onclick = (e) => {
+        e.stopPropagation();
+        AppState.assignments = AppState.assignments.filter(a => a.id !== assignment.id);
+        persist('assignment', 'delete', assignment.id);
+        renderCalendar();
+        renderSheetContent(dateStr);
+      };
+
+      item.appendChild(avatarDiv);
+      item.appendChild(infoDiv);
+      item.appendChild(horasDiv);
+      item.appendChild(editBtn);
+      item.appendChild(delBtn);
+      container.appendChild(item);
+    });
+  }
+
+  // ── Eventos del día ──
+  const dayEvents = AppState.events.filter(ev => ev.fecha === dateStr);
+  const titleEventos = document.createElement('div');
+  titleEventos.className = 'sheet-section-title';
+  titleEventos.textContent = 'Eventos';
+  container.appendChild(titleEventos);
+
+  if (dayEvents.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'sheet-empty';
+    empty.textContent = 'Sin eventos';
+    container.appendChild(empty);
+  } else {
+    dayEvents.forEach(ev => {
+      const item = document.createElement('div');
+      item.className = 'sheet-event-item';
+      item.style.justifyContent = 'space-between';
+
+      const leftDiv = document.createElement('div');
+      leftDiv.style.cssText = 'display:flex;align-items:flex-start;gap:10px;flex:1;';
+      leftDiv.innerHTML = `
+        <div class="sheet-event-dot"></div>
+        <div>
+          <div class="sheet-event-name">${ev.nombre}</div>
+          <div class="sheet-event-time">${formatTime(ev.inicio)} – ${formatTime(ev.fin)}</div>
+        </div>
+      `;
+
+      // Botones: editar y eliminar
+      const actionsDiv = document.createElement('div');
+      actionsDiv.style.cssText = 'display:flex;align-items:center;gap:2px;flex-shrink:0;';
+
+      const editBtn = document.createElement('button');
+      editBtn.title = 'Editar evento';
+      editBtn.style.cssText = 'background:none;border:none;cursor:pointer;padding:4px;color:var(--text-secondary);display:flex;align-items:center;';
+      editBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">edit</span>';
+      editBtn.onclick = () => openEditEvento(ev.id);
+
+      const delBtn = document.createElement('button');
+      delBtn.title = 'Eliminar evento';
+      delBtn.style.cssText = 'background:none;border:none;cursor:pointer;padding:4px;color:var(--weekend);display:flex;align-items:center;';
+      delBtn.innerHTML = '<span class="material-symbols-rounded" style="font-size:18px;">delete</span>';
+      delBtn.onclick = () => {
+        AppState.events = AppState.events.filter(e => e.id !== ev.id);
+        persist('evento', 'delete', ev.id);
+        renderCalendar();
+        renderSheetContent(dateStr);
+      };
+
+      actionsDiv.appendChild(editBtn);
+      actionsDiv.appendChild(delBtn);
+      item.appendChild(leftDiv);
+      item.appendChild(actionsDiv);
+      container.appendChild(item);
+    });
+  }
+
+  container.appendChild(document.createElement('div')).style.height = '8px';
+}
+
+/**
+ * Abre el selector de turnos para añadir uno al día seleccionado.
+ * Muestra los turnos disponibles (plantillas) y permite elegir uno.
+ * Si no hay plantillas, abre el modal de nuevo turno directamente.
+ */
+function openAddShiftFromSheet() {
+  if (AppState.shifts.length === 0) {
+    // Sin plantillas → crear nueva directamente
+    document.getElementById('edit-shift-id').value = '';
+    document.getElementById('modal-turno-title').textContent = 'Nuevo Turno';
+    openModal('modal-nuevo-turno');
+    return;
+  }
+  renderShiftSelectorModal();
+  openModal('modal-select-shift');
+}
+
+/**
+ * Renderiza la lista de turnos en el modal selector.
+ */
+function renderShiftSelectorModal() {
+  const container = document.getElementById('shift-selector-list');
+  container.innerHTML = '';
+
+  const dateStr = AppState.selectedDate;
+
+  // IDs ya asignados en este día
+  const assignedIds = new Set(
+    AppState.assignments.filter(a => a.fecha === dateStr).map(a => a.shiftId)
+  );
+
+  AppState.shifts.forEach(shift => {
+    const alreadyIn = assignedIds.has(shift.id);
+    const item = document.createElement('div');
+    item.className = 'shift-list-item';
+    item.style.opacity = alreadyIn ? '0.45' : '1';
+    item.onclick = () => {
+      if (alreadyIn) return;
+      const newA = {
+        id: genUUID(),
+        shiftId: shift.id,
+        fecha: dateStr,
+      };
+      AppState.assignments.push(newA);
+      persist('assignment', 'upsert', newA);
+      closeModal('modal-select-shift');
+      renderCalendar();
+      renderSheetContent(dateStr);
+    };
+    item.innerHTML = `
+      <div class="shift-avatar" style="background-color:${shift.color}">${getInitials(shift.lugar)}</div>
+      <div class="shift-info">
+        <div class="shift-name">${shift.lugar} - ${shift.nombre}</div>
+        <div class="shift-time">${shift.allDay ? 'Todo el día' : formatTime(shift.inicio) + ' - ' + formatTime(shift.fin)} · ${shift.totalHoras}h</div>
+      </div>
+      ${alreadyIn
+        ? '<span class="material-symbols-rounded" style="font-size:18px;color:var(--accent);">check_circle</span>'
+        : '<span class="material-symbols-rounded shift-chevron" style="font-size:20px;">add</span>'
+      }
+    `;
+    container.appendChild(item);
+  });
+}
+
+/* ================================================================
+   SECCIÓN 9: MODAL - NUEVO / EDITAR EVENTO
+   El ID del evento en edición se guarda como data-attribute en el
+   propio botón guardar, eliminando cualquier variable de estado
+   externa que pueda ser pisada por otros flujos.
+   ================================================================ */
+
+/**
+ * Abre el modal de evento en modo "nuevo".
+ */
+function openAddEventFromSheet() {
+  document.getElementById('btn-guardar-evento').dataset.eventoId = '';
+  document.getElementById('modal-evento-title').textContent = 'Nuevo Evento';
+  document.getElementById('evento-nombre').value = '';
+  document.getElementById('evento-inicio').value = '';
+  document.getElementById('evento-fin').value = '';
+  if (AppState.selectedDate) {
+    document.getElementById('evento-fecha').value = AppState.selectedDate;
+  }
+  document.getElementById('modal-nuevo-evento').classList.add('visible');
+}
+
+/**
+ * Abre el modal de evento en modo "editar".
+ * Guarda el ID directamente en el botón guardar como data-attribute.
+ * @param {string} eventoId
+ */
+function openEditEvento(eventoId) {
+  const ev = AppState.events.find(e => e.id === eventoId);
+  if (!ev) return;
+  // El ID viaja en el propio botón, no en ninguna variable externa
+  document.getElementById('btn-guardar-evento').dataset.eventoId = ev.id;
+  document.getElementById('modal-evento-title').textContent = 'Editar Evento';
+  document.getElementById('evento-nombre').value = ev.nombre;
+  document.getElementById('evento-fecha').value  = ev.fecha;
+  document.getElementById('evento-inicio').value = ev.inicio;
+  document.getElementById('evento-fin').value    = ev.fin;
+  document.getElementById('modal-nuevo-evento').classList.add('visible');
+}
+
+/**
+ * Guarda el evento. Lee el ID del data-attribute del propio botón.
+ */
+function saveEvento() {
+  const nombre = document.getElementById('evento-nombre').value.trim();
+  const fecha  = document.getElementById('evento-fecha').value;
+  const inicio = document.getElementById('evento-inicio').value;
+  const fin    = document.getElementById('evento-fin').value;
+  const editId = document.getElementById('btn-guardar-evento').dataset.eventoId || '';
+
+  if (!nombre || !fecha || !inicio || !fin) {
+    alert('Por favor completa todos los campos del evento.');
+    return;
+  }
+
+  if (editId) {
+    const idx = AppState.events.findIndex(e => e.id === editId);
+    if (idx !== -1) {
+      AppState.events[idx] = { id: editId, nombre, fecha, inicio, fin };
+      persist('evento', 'upsert', AppState.events[idx]);
+    }
+  } else {
+    const newEv = { id: genUUID(), nombre, fecha, inicio, fin };
+    AppState.events.push(newEv);
+    persist('evento', 'upsert', newEv);
+  }
+
+  document.getElementById('btn-guardar-evento').dataset.eventoId = '';
+  // persist() ya llamó Storage.save() internamente
+  document.getElementById('modal-nuevo-evento').classList.remove('visible');
+  renderCalendar();
+  if (AppState.selectedDate) renderSheetContent(AppState.selectedDate);
+}
+
+let _selectedColor = SHIFT_COLORS[0];
+let _allDay = false;
+
+/**
+ * Abre el modal de nuevo turno, inicializando el formulario.
+ */
+function openNuevoTurno() {
+  AppState.editingShiftId = null;
+  document.getElementById('modal-turno-title').textContent = 'Nuevo Turno';
+  document.getElementById('edit-shift-id').value = '';
+  document.getElementById('shift-lugar').value = '';
+  document.getElementById('shift-nombre').value = '';
+  document.getElementById('shift-inicio').value = '07:00';
+  document.getElementById('shift-fin').value = '13:00';
+  _allDay = false;
+  _selectedColor = SHIFT_COLORS[0];
+  updateAlldayToggle();
+  renderColorGrid();
+  openModal('modal-nuevo-turno');
+}
+
+function openModal(id) {
+  if (id === 'modal-nuevo-turno' && !document.getElementById('edit-shift-id').value) {
+    // Reset form si es nuevo
+    document.getElementById('shift-lugar').value = '';
+    document.getElementById('shift-nombre').value = '';
+    document.getElementById('shift-inicio').value = '07:00';
+    document.getElementById('shift-fin').value = '13:00';
+    _allDay = false;
+    _selectedColor = SHIFT_COLORS[0];
+    updateAlldayToggle();
+    renderColorGrid();
+    document.getElementById('modal-turno-title').textContent = 'Nuevo Turno';
+  }
+  document.getElementById(id).classList.add('visible');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('visible');
+}
+
+function handleModalOverlayClick(event, id) {
+  if (event.target === document.getElementById(id)) {
+    closeModal(id);
+  }
+}
+
+/**
+ * Renderiza la grilla de colores en el modal de turno.
+ */
+function renderColorGrid() {
+  const grid = document.getElementById('color-grid');
+  grid.innerHTML = '';
+  SHIFT_COLORS.forEach(color => {
+    const sw = document.createElement('div');
+    sw.className = 'color-swatch' + (color === _selectedColor ? ' selected' : '');
+    sw.style.backgroundColor = color;
+    sw.onclick = () => selectColor(color);
+    grid.appendChild(sw);
+  });
+  updateColorPreview();
+}
+
+function selectColor(color) {
+  _selectedColor = color;
+  renderColorGrid();
+}
+
+function selectCustomColor(color) {
+  _selectedColor = color;
+  renderColorGrid();
+}
+
+function updateColorPreview() {
+  const preview = document.getElementById('selected-color-preview');
+  const dot = document.getElementById('selected-color-dot');
+  const hex = document.getElementById('selected-color-hex');
+  if (_selectedColor) {
+    preview.style.display = 'flex';
+    dot.style.backgroundColor = _selectedColor;
+    hex.textContent = _selectedColor.toUpperCase();
+  }
+}
+
+function toggleAllDay() {
+  _allDay = !_allDay;
+  updateAlldayToggle();
+}
+
+function updateAlldayToggle() {
+  const toggle = document.getElementById('allday-toggle');
+  const finInput = document.getElementById('shift-fin');
+  if (_allDay) {
+    toggle.classList.add('on');
+    finInput.disabled = true;
+    finInput.value = '';
+  } else {
+    toggle.classList.remove('on');
+    finInput.disabled = false;
+  }
+}
+
+/**
+ * Calcula el total de horas entre dos tiempos HH:MM.
+ * Soporta turnos que cruzan la medianoche.
+ */
+function calcHoras(inicio, fin, allDay) {
+  if (allDay) return 24;
+  if (!inicio || !fin) return 0;
+  const [ih, im] = inicio.split(':').map(Number);
+  const [fh, fm] = fin.split(':').map(Number);
+  let mins = (fh * 60 + fm) - (ih * 60 + im);
+  if (mins <= 0) mins += 24 * 60; // Cruza medianoche
+  return Math.round((mins / 60) * 10) / 10;
+}
+
+/**
+ * Guarda un turno (nuevo o editado).
+ * Al EDITAR una plantilla existente, las asignaciones previas que no tengan
+ * override de horas quedan congeladas con las horas antiguas, para no
+ * alterar retroactivamente el historial del calendario.
+ */
+function saveShift() {
+  const lugar  = document.getElementById('shift-lugar').value.trim();
+  const nombre = document.getElementById('shift-nombre').value.trim();
+  const inicio = document.getElementById('shift-inicio').value;
+  const fin    = document.getElementById('shift-fin').value;
+  const editId = document.getElementById('edit-shift-id').value;
+
+  if (!lugar || !nombre) {
+    alert('Por favor completa el lugar y el nombre del turno.');
+    return;
+  }
+  if (!_allDay && (!inicio || !fin)) {
+    alert('Por favor indica la hora de inicio y fin, o selecciona "Todo el día".');
+    return;
+  }
+
+  const totalHoras = calcHoras(inicio, fin, _allDay);
+
+  if (editId) {
+    const idx = AppState.shifts.findIndex(s => s.id === editId);
+    if (idx !== -1) {
+      const anterior = AppState.shifts[idx];
+      const horarioCambia = anterior.inicio !== inicio || anterior.fin !== fin || anterior.allDay !== _allDay;
+
+      if (horarioCambia) {
+        const toFreeze = AppState.assignments.filter(a => a.shiftId === editId && a.overrideHoras === undefined);
+        toFreeze.forEach(a => {
+          a.overrideInicio = anterior.inicio;
+          a.overrideFin    = anterior.fin;
+          a.overrideAllDay = anterior.allDay;
+          a.overrideHoras  = anterior.totalHoras;
+          persist('assignment', 'upsert', a);
+        });
+      }
+
+      AppState.shifts[idx] = {
+        ...anterior, lugar, nombre, inicio, fin,
+        color: _selectedColor, totalHoras, allDay: _allDay
+      };
+      persist('shift', 'upsert', AppState.shifts[idx]);
+    }
+  } else {
+    const newShift = {
+      id: genUUID(),
+      lugar, nombre, inicio, fin,
+      color: _selectedColor, totalHoras, allDay: _allDay,
+    };
+    AppState.shifts.push(newShift);
+    persist('shift', 'upsert', newShift);
+  }
+
+  // persist() ya llamó Storage.save() internamente
+  closeModal('modal-nuevo-turno');
+  if (AppState.editMode) renderEditBar();
+  renderCalendar();
+  renderShiftsList();
+}
+
+/* ================================================================
+   SECCIÓN 10: DETALLE DE TURNO (plantilla)
+   ================================================================ */
+
+function openShiftDetail(shiftId) {
+  AppState.editingDetailShiftId = shiftId;
+  const shift = AppState.shifts.find(s => s.id === shiftId);
+  if (!shift) return;
+
+  const container = document.getElementById('detalle-turno-content');
+  container.innerHTML = `
+    <div style="padding:16px 20px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="width:52px;height:52px;border-radius:50%;background-color:${shift.color};display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;">
+          ${getInitials(shift.lugar)}
+        </div>
+        <div>
+          <div style="font-size:18px;font-weight:700;color:var(--text-primary);">${shift.lugar} - ${shift.nombre}</div>
+          <div style="font-size:14px;color:var(--text-secondary);margin-top:2px;">
+            ${shift.allDay ? 'Todo el día' : formatTime(shift.inicio) + ' - ' + formatTime(shift.fin)} · ${shift.totalHoras}h
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--bg-primary);border-radius:12px;padding:14px;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;font-weight:600;margin-bottom:8px;">Detalles</div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);">
+          <span style="font-size:14px;color:var(--text-secondary);">Lugar</span>
+          <span style="font-size:14px;font-weight:600;color:var(--text-primary);">${shift.lugar}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);">
+          <span style="font-size:14px;color:var(--text-secondary);">Turno</span>
+          <span style="font-size:14px;font-weight:600;color:var(--text-primary);">${shift.nombre}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-light);">
+          <span style="font-size:14px;color:var(--text-secondary);">Horario</span>
+          <span style="font-size:14px;font-weight:600;color:var(--text-primary);">${shift.allDay ? 'Todo el día' : formatTime(shift.inicio) + ' – ' + formatTime(shift.fin)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">
+          <span style="font-size:14px;color:var(--text-secondary);">Total horas</span>
+          <span style="font-size:14px;font-weight:600;color:var(--text-primary);">${shift.totalHoras}h</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  closeDaySheet();
+  closeModal('modal-detalle-turno');
+  setTimeout(() => openModal('modal-detalle-turno'), 50);
+}
+
+function deleteShiftFromDetail() {
+  const shiftId = AppState.editingDetailShiftId;
+  if (!shiftId) return;
+  if (!confirm('¿Eliminar este turno y todas sus asignaciones en el calendario?')) return;
+
+  AppState.assignments.filter(a => a.shiftId === shiftId).forEach(a => persist('assignment', 'delete', a.id));
+  AppState.shifts = AppState.shifts.filter(s => s.id !== shiftId);
+  AppState.assignments = AppState.assignments.filter(a => a.shiftId !== shiftId);
+  persist('shift', 'delete', shiftId);
+
+  closeModal('modal-detalle-turno');
+  renderCalendar();
+  renderShiftsList();
+}
+
+function editShiftFromDetail() {
+  const shiftId = AppState.editingDetailShiftId;
+  const shift = AppState.shifts.find(s => s.id === shiftId);
+  if (!shift) return;
+
+  // Prellenar formulario
+  document.getElementById('edit-shift-id').value = shift.id;
+  document.getElementById('shift-lugar').value = shift.lugar;
+  document.getElementById('shift-nombre').value = shift.nombre;
+  document.getElementById('shift-inicio').value = shift.inicio;
+  document.getElementById('shift-fin').value = shift.fin;
+  _allDay = shift.allDay || false;
+  _selectedColor = shift.color;
+  document.getElementById('modal-turno-title').textContent = 'Editar Turno';
+
+  updateAlldayToggle();
+  renderColorGrid();
+
+  closeModal('modal-detalle-turno');
+  setTimeout(() => openModal('modal-nuevo-turno'), 50);
+}
+
+/* ================================================================
+   SECCIÓN 11: VISTA TURNOS (lista de plantillas)
+   ================================================================ */
+
+// Estado de orden: false = orden de creación, true = alfabético A-Z
+AppState.shiftsAlphaSort = false;
+
+function toggleShiftsSort() {
+  AppState.shiftsAlphaSort = !AppState.shiftsAlphaSort;
+  const label = document.getElementById('sort-shifts-label');
+  if (label) label.textContent = AppState.shiftsAlphaSort ? 'Orden original' : 'A–Z';
+  renderShiftsList();
+}
+
+function renderShiftsList() {
+  const container = document.getElementById('shifts-list-container');
+  container.innerHTML = '';
+
+  if (AppState.shifts.length === 0) {
+    container.innerHTML = `
+      <div style="padding:24px;text-align:center;color:var(--text-muted);font-size:14px;">
+        <span class="material-symbols-rounded" style="font-size:40px;display:block;margin-bottom:8px;opacity:0.4;">badge</span>
+        Sin turnos creados
+      </div>
+    `;
+    return;
+  }
+
+  // Ordenar según estado
+  let list = [...AppState.shifts];
+  if (AppState.shiftsAlphaSort) {
+    list.sort((a, b) => `${a.lugar} ${a.nombre}`.localeCompare(`${b.lugar} ${b.nombre}`, 'es'));
+  }
+
+  list.forEach(shift => {
+    const item = document.createElement('div');
+    item.className = 'shift-list-item';
+    item.onclick = () => openShiftDetail(shift.id);
+    item.innerHTML = `
+      <div class="shift-avatar" style="background-color:${shift.color}">${getInitials(shift.lugar)}</div>
+      <div class="shift-info">
+        <div class="shift-name">${shift.lugar} - ${shift.nombre}</div>
+        <div class="shift-time">${shift.allDay ? 'Todo el día' : formatTime(shift.inicio) + ' - ' + formatTime(shift.fin)} · ${shift.totalHoras}h</div>
+      </div>
+      <span class="material-symbols-rounded shift-chevron" style="font-size:20px;">chevron_right</span>
+    `;
+    container.appendChild(item);
+  });
+}
+
+/* ================================================================
+   SECCIÓN 12: VISTA INFORMES
+   ================================================================ */
+
+/**
+ * Datos de demo: definiciones de informes.
+ * Formato: {
+ *   id, titulo,
+ *   turnoIds: string[],          // IDs de plantillas incluidas
+ *   salarioBase: { nombre, valorHora },
+ *   pagosExtra: [{ id, nombre, valorHora, turnoIds }],  // por hora con turnos específicos
+ *   pagosFijos:  [{ id, nombre, valor, nota }],         // montos fijos
+ * }
+ */
+const DEMO_INFORMES = [
+  {
+    id: 'inf_1',
+    titulo: 'E.S.E Santiago',
+    turnoIds: ['shift_1','shift_2','shift_3'],
+    salarioBase: { nombre: 'Salario por hora', valorHora: 0 },
+    pagosExtra: [
+      { id: 'pe_1', nombre: 'Presencial',     valorHora: 99225,  turnoIds: ['shift_1'] },
+      { id: 'pe_2', nombre: 'Consulta',       valorHora: 99225,  turnoIds: ['shift_3'] },
+      { id: 'pe_3', nombre: 'Disponibilidad', valorHora: 39690,  turnoIds: ['shift_2'] },
+    ],
+    pagosFijos: [],
+  },
+  {
+    id: 'inf_2',
+    titulo: 'Sogamoso',
+    turnoIds: ['shift_5','shift_6'],
+    salarioBase: { nombre: 'Salario por hora', valorHora: 85000 },
+    pagosExtra: [],
+    pagosFijos: [],
+  },
+];
+
+/**
+ * Calcula las horas totales de un conjunto de turnoIds en el mes dado.
+ * Usa overrides de hora si existen en las asignaciones.
+ */
+function calcHorasMes(turnoIds, year, month) {
+  const monthStr = `${year}-${String(month+1).padStart(2,'0')}`;
+  return AppState.assignments
+    .filter(a => a.fecha.startsWith(monthStr) && turnoIds.includes(a.shiftId))
+    .reduce((sum, a) => {
+      const shift = AppState.shifts.find(s => s.id === a.shiftId);
+      if (!shift) return sum;
+      return sum + (a.overrideHoras !== undefined ? a.overrideHoras : shift.totalHoras);
+    }, 0);
+}
+
+function renderInformes() {
+  const { year, month } = AppState.informePeriod;
+  const mesStr = `${year}-${String(month+1).padStart(2,'0')}`;
+
+  // Label período
+  const firstDay = new Date(year, month, 1);
+  const lastDay  = new Date(year, month + 1, 0);
+  document.getElementById('informe-period-label').textContent =
+    `${DAYS_ES_LONG[firstDay.getDay()].slice(0,3).toLowerCase()}, ${firstDay.getDate()} de ` +
+    `${MONTHS_ES[month].slice(0,3).toLowerCase()}. – ${lastDay.getDate()} de ` +
+    `${MONTHS_ES[month].slice(0,3).toLowerCase()}. de ${year}`;
+
+  const container = document.getElementById('informes-content');
+  container.innerHTML = '';
+
+  if (AppState.informes.length === 0) {
+    container.innerHTML = `
+      <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
+        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:12px;opacity:0.3;">bar_chart</span>
+        <div style="font-size:16px;font-weight:500;margin-bottom:4px;">Sin informes</div>
+        <div style="font-size:13px;">Toca + para crear tu primer informe.</div>
+      </div>`;
+    return;
+  }
+
+  // ── Calcular totales individuales y acumular gran total ──
+  let granTotal = 0;
+  const totalesIndividuales = AppState.informes.map(inf => {
+    let total = 0;
+    total += calcHorasMes(inf.turnoIds, year, month) * (inf.salarioBase.valorHora || 0);
+    (inf.pagosExtra || []).forEach(pe => {
+      total += calcHorasMes(pe.turnoIds || [], year, month) * (pe.valorHora || 0);
+    });
+    (inf.pagosFijos || []).forEach(pf => {
+      // Solo incluir si no tiene mes o si su mes coincide con el período actual
+      const aplica = !pf.mes || pf.mes === mesStr;
+      if (aplica) total += (pf.valor || 0);
+    });
+    granTotal += total;
+    return total;
+  });
+
+  // ── Tarjeta "Total mes" — siempre primera ──
+  const totalMesCard = document.createElement('div');
+  totalMesCard.className = 'informe-card';
+  totalMesCard.style.cssText = 'background:var(--today-bg);margin-bottom:16px;';
+  totalMesCard.innerHTML = `
+    <div class="informe-card-header" style="border-bottom-color:rgba(255,255,255,0.12);">
+      <div class="informe-card-title" style="color:var(--today-text);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Total mes</div>
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:baseline;gap:6px;">
+      <span style="font-size:28px;font-weight:800;color:var(--today-text);letter-spacing:-0.5px;">${formatMoney(granTotal)}</span>
+    </div>
+    ${AppState.informes.map((inf, i) => `
+      <div style="display:flex;justify-content:space-between;padding:4px 16px;font-size:12px;">
+        <span style="color:var(--today-text);opacity:0.7;">${inf.titulo}</span>
+        <span style="color:var(--today-text);opacity:0.85;font-weight:600;">${formatMoney(totalesIndividuales[i])}</span>
+      </div>`).join('')}
+    <div style="height:10px;"></div>`;
+  container.appendChild(totalMesCard);
+
+  // ── Tarjetas individuales ──
+  AppState.informes.forEach((inf, infIdx) => {
+    const card = document.createElement('div');
+    card.className = 'informe-card';
+
+    const header = document.createElement('div');
+    header.className = 'informe-card-header';
+    header.innerHTML = `
+      <div class="informe-card-title">${inf.titulo}</div>
+      <div class="informe-card-actions">
+        <button onclick="openModalInforme('${inf.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-secondary);display:flex;">
+          <span class="material-symbols-rounded" style="font-size:18px;">edit</span>
+        </button>
+        <button onclick="deleteInforme('${inf.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--weekend);display:flex;">
+          <span class="material-symbols-rounded" style="font-size:18px;">delete</span>
+        </button>
+      </div>`;
+    card.appendChild(header);
+
+    const body = document.createElement('div');
+    body.className = 'informe-card-body';
+
+    // Salario base
+    const horasBase = calcHorasMes(inf.turnoIds, year, month);
+    const valorBase = horasBase * (inf.salarioBase.valorHora || 0);
+    body.appendChild(makeInformePagoRow(inf.salarioBase.nombre, horasBase + 'h', formatMoney(valorBase), false));
+
+    // Pagos por hora
+    (inf.pagosExtra || []).forEach(pe => {
+      const h = calcHorasMes(pe.turnoIds || [], year, month);
+      const v = h * (pe.valorHora || 0);
+      body.appendChild(makeInformePagoRow(pe.nombre, h + 'h', '+' + formatMoney(v), true));
+    });
+
+    // Pagos fijos — solo los que aplican a este mes
+    (inf.pagosFijos || []).forEach(pf => {
+      const aplica = !pf.mes || pf.mes === mesStr;
+      if (!aplica) return;
+      const mesLabel = pf.mes ? `${MONTHS_ES[parseInt(pf.mes.split('-')[1])-1]} ${pf.mes.split('-')[0]}` : '';
+      const sub = [pf.nota, mesLabel].filter(Boolean).join(' · ');
+      body.appendChild(makeInformePagoRow(pf.nombre, sub, '+' + formatMoney(pf.valor || 0), true));
+    });
+
+    card.appendChild(body);
+
+    // Avatares
+    const avatarRow = document.createElement('div');
+    avatarRow.className = 'informe-avatars';
+    inf.turnoIds.slice(0, 4).forEach(tid => {
+      const s = AppState.shifts.find(x => x.id === tid);
+      if (!s) return;
+      const av = document.createElement('div');
+      av.className = 'informe-avatar-sm';
+      av.style.backgroundColor = s.color;
+      av.textContent = getInitials(s.lugar);
+      avatarRow.appendChild(av);
+    });
+    if (inf.turnoIds.length > 4) {
+      const more = document.createElement('div');
+      more.className = 'informe-more-btn';
+      more.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">more_horiz</span>`;
+      avatarRow.appendChild(more);
+    }
+    card.appendChild(avatarRow);
+
+    // Total individual
+    const totalRow = document.createElement('div');
+    totalRow.className = 'informe-total-row';
+    totalRow.innerHTML = `
+      <span class="informe-total-label">Total</span>
+      <span class="informe-total-valor">${formatMoney(totalesIndividuales[infIdx])}</span>`;
+    card.appendChild(totalRow);
+
+    container.appendChild(card);
+  });
+}
+
+function makeInformePagoRow(nombre, sub, valor, positive) {
+  const row = document.createElement('div');
+  row.className = 'informe-pago-row';
+  row.innerHTML = `
+    <div>
+      <div class="informe-pago-label">${nombre}</div>
+      ${sub ? `<div class="informe-pago-sub">${sub}</div>` : ''}
+    </div>
+    <div class="informe-pago-valor ${positive ? 'positive' : ''}">${valor}</div>`;
+  return row;
+}
+
+function deleteInforme(id) {
+  if (!confirm('¿Eliminar este informe?')) return;
+  AppState.informes = AppState.informes.filter(i => i.id !== id);
+  persist('informe', 'delete', id);
+  renderInformes();
+}
+
+document.getElementById('informe-prev').onclick = () => {
+  const { year, month } = AppState.informePeriod;
+  AppState.informePeriod = month === 0
+    ? { year: year-1, month: 11 }
+    : { year, month: month-1 };
+  renderInformes();
+};
+document.getElementById('informe-next').onclick = () => {
+  const { year, month } = AppState.informePeriod;
+  AppState.informePeriod = month === 11
+    ? { year: year+1, month: 0 }
+    : { year, month: month+1 };
+  renderInformes();
+};
+
+/* ================================================================
+   SECCIÓN 12b: MODAL DE INFORME
+   ================================================================ */
+
+// Estado del modal de informe
+const _informe = {
+  id: null,
+  turnosSeleccionados: new Set(),
+  pagosExtra: [],   // [{id, nombre, valorHora, turnoIds: Set}]
+  pagosFijos: [],   // [{id, nombre, valor, nota}]
+};
+
+function openModalInforme(informeId) {
+  const inf = informeId ? AppState.informes.find(i => i.id === informeId) : null;
+
+  _informe.id = inf ? inf.id : null;
+  document.getElementById('modal-informe-title').textContent = inf ? 'Editar Informe' : 'Nuevo Informe';
+  document.getElementById('btn-guardar-informe').dataset.informeId = inf ? inf.id : '';
+
+  document.getElementById('informe-titulo').value = inf ? inf.titulo : '';
+  document.getElementById('informe-salario-nombre').value = inf ? (inf.salarioBase.nombre || 'Salario por hora') : 'Salario por hora';
+  // Mostrar con puntuación de miles
+  const vBase = inf ? (inf.salarioBase.valorHora || 0) : 0;
+  document.getElementById('informe-salario-valor').value = vBase ? formatNumberInput(vBase) : '';
+
+  // Turnos seleccionados
+  _informe.turnosSeleccionados = new Set(inf ? inf.turnoIds : []);
+
+  // Pagos extra
+  _informe.pagosExtra = inf ? (inf.pagosExtra || []).map(pe => ({
+    ...pe, turnoIds: new Set(pe.turnoIds || [])
+  })) : [];
+
+  // Pagos fijos
+  _informe.pagosFijos = inf ? [...(inf.pagosFijos || [])] : [];
+
+  renderInformeTurnosList();
+  renderPagosExtra();
+  renderPagosFijos();
+
+  document.getElementById('modal-informe').classList.add('visible');
+}
+
+function renderInformeTurnosList() {
+  const container = document.getElementById('informe-turnos-list');
+  container.innerHTML = '';
+
+  if (AppState.shifts.length === 0) {
+    container.innerHTML = '<div style="padding:12px 14px;font-size:13px;color:var(--text-muted);">Sin turnos creados.</div>';
+    return;
+  }
+
+  AppState.shifts.forEach(shift => {
+    const checked = _informe.turnosSeleccionados.has(shift.id);
+    const row = document.createElement('div');
+    row.className = 'informe-turno-check';
+    row.onclick = () => {
+      if (_informe.turnosSeleccionados.has(shift.id)) {
+        _informe.turnosSeleccionados.delete(shift.id);
+      } else {
+        _informe.turnosSeleccionados.add(shift.id);
+      }
+      renderInformeTurnosList();
+    };
+    row.innerHTML = `
+      <div class="check-box ${checked ? 'checked' : ''}"></div>
+      <div style="width:28px;height:28px;border-radius:50%;background:${shift.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${getInitials(shift.lugar)}</div>
+      <div style="flex:1;">
+        <div style="font-size:14px;font-weight:500;color:var(--text-primary);">${shift.lugar} - ${shift.nombre}</div>
+        <div style="font-size:12px;color:var(--text-muted);">${shift.allDay ? 'Todo el día' : formatTime(shift.inicio) + ' – ' + formatTime(shift.fin)}</div>
+      </div>`;
+    container.appendChild(row);
+  });
+}
+
+function addPagoExtra() {
+  _informe.pagosExtra.push({
+    id: genUUID(),
+    nombre: '',
+    valorHora: 0,
+    turnoIds: new Set(),
+  });
+  renderPagosExtra();
+}
+
+function renderPagosExtra() {
+  const container = document.getElementById('informe-pagos-extra-container');
+  container.innerHTML = '';
+  _informe.pagosExtra.forEach((pe, idx) => {
+    const block = document.createElement('div');
+    block.className = 'pago-extra-block';
+    block.innerHTML = `
+      <div class="pago-block-title">
+        <span>Pago por hora ${idx + 1}</span>
+        <button class="pago-remove-btn" onclick="removePagoExtra(${idx})">
+          <span class="material-symbols-rounded" style="font-size:16px;">close</span>
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Nombre</label>
+          <input type="text" class="form-input" value="${pe.nombre}" oninput="_informe.pagosExtra[${idx}].nombre=this.value" placeholder="Ej: Presencial" style="font-size:13px;padding:8px 10px;">
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Valor/hora</label>
+          <div class="input-money-wrap">
+            <span class="money-prefix">$</span>
+            <input type="text" inputmode="numeric" class="form-input" value="${pe.valorHora ? formatNumberInput(pe.valorHora) : ''}" oninput="onMoneyInput(this, v => _informe.pagosExtra[${idx}].valorHora=v)" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;">
+          </div>
+        </div>
+      </div>
+      <label class="form-label" style="margin-bottom:4px;">Turnos que aplican</label>
+      <div id="pe-turnos-${idx}" style="background:var(--bg-card);border-radius:8px;border:1px solid var(--border);overflow:hidden;"></div>`;
+    container.appendChild(block);
+    renderPagoExtraTurnos(idx);
+  });
+}
+
+function renderPagoExtraTurnos(idx) {
+  const container = document.getElementById(`pe-turnos-${idx}`);
+  if (!container) return;
+  container.innerHTML = '';
+  AppState.shifts.forEach(shift => {
+    const checked = _informe.pagosExtra[idx].turnoIds.has(shift.id);
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border-light);cursor:pointer;';
+    row.onclick = () => {
+      if (_informe.pagosExtra[idx].turnoIds.has(shift.id)) {
+        _informe.pagosExtra[idx].turnoIds.delete(shift.id);
+      } else {
+        _informe.pagosExtra[idx].turnoIds.add(shift.id);
+      }
+      renderPagoExtraTurnos(idx);
+    };
+    row.innerHTML = `
+      <div class="check-box ${checked ? 'checked' : ''}"></div>
+      <div style="width:22px;height:22px;border-radius:50%;background:${shift.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0;">${getInitials(shift.lugar)}</div>
+      <span style="font-size:13px;color:var(--text-primary);">${shift.lugar} - ${shift.nombre}</span>`;
+    container.appendChild(row);
+  });
+}
+
+function removePagoExtra(idx) {
+  _informe.pagosExtra.splice(idx, 1);
+  renderPagosExtra();
+}
+
+function addPagoFijo() {
+  // mes: null = todos los meses, o 'YYYY-MM'
+  _informe.pagosFijos.push({ id: genUUID(), nombre: '', valor: 0, nota: '', mes: null });
+  renderPagosFijos();
+}
+
+function renderPagosFijos() {
+  const container = document.getElementById('informe-pagos-fijos-container');
+  container.innerHTML = '';
+
+  // Solo 2 opciones: todos los meses o el mes activo en la vista de informes
+  const { year, month } = AppState.informePeriod;
+  const mesActivoValue = `${year}-${String(month+1).padStart(2,'0')}`;
+  const mesActivoLabel = `${MONTHS_ES[month]} ${year}`;
+
+  _informe.pagosFijos.forEach((pf, idx) => {
+    const block = document.createElement('div');
+    block.className = 'pago-fijo-block';
+    block.innerHTML = `
+      <div class="pago-block-title">
+        <span>Pago adicional ${idx + 1}</span>
+        <button class="pago-remove-btn" onclick="removePagoFijo(${idx})">
+          <span class="material-symbols-rounded" style="font-size:16px;">close</span>
+        </button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Nombre</label>
+          <input type="text" class="form-input" value="${pf.nombre}" oninput="_informe.pagosFijos[${idx}].nombre=this.value" placeholder="Ej: Bono" style="font-size:13px;padding:8px 10px;">
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Valor</label>
+          <div class="input-money-wrap">
+            <span class="money-prefix">$</span>
+            <input type="text" inputmode="numeric" class="form-input" value="${pf.valor ? formatNumberInput(pf.valor) : ''}" oninput="onMoneyInput(this, v => _informe.pagosFijos[${idx}].valor=v)" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;">
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Mes</label>
+          <select class="form-input" oninput="_informe.pagosFijos[${idx}].mes=this.value||null" style="font-size:13px;padding:8px 10px;">
+            <option value="" ${!pf.mes ? 'selected' : ''}>Todos los meses</option>
+            <option value="${mesActivoValue}" ${pf.mes === mesActivoValue ? 'selected' : ''}>${mesActivoLabel}</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label" style="margin-bottom:4px;">Nota</label>
+          <input type="text" class="form-input" value="${pf.nota || ''}" oninput="_informe.pagosFijos[${idx}].nota=this.value" placeholder="Descripción" style="font-size:13px;padding:8px 10px;">
+        </div>
+      </div>`;
+    container.appendChild(block);
+  });
+}
+
+function removePagoFijo(idx) {
+  _informe.pagosFijos.splice(idx, 1);
+  renderPagosFijos();
+}
+
+function saveInforme() {
+  const titulo = document.getElementById('informe-titulo').value.trim();
+  if (!titulo) { alert('Por favor ingresa un título para el informe.'); return; }
+
+  const salarioBase = {
+    nombre:    document.getElementById('informe-salario-nombre').value.trim() || 'Salario por hora',
+    valorHora: parseMoney(document.getElementById('informe-salario-valor').value),
+  };
+
+  const nuevoInforme = {
+    id:        _informe.id || genUUID(),
+    titulo,
+    turnoIds:  [..._informe.turnosSeleccionados],
+    salarioBase,
+    pagosExtra: _informe.pagosExtra.map(pe => ({
+      ...pe, turnoIds: [...pe.turnoIds]
+    })),
+    pagosFijos: [..._informe.pagosFijos],
+  };
+
+  if (_informe.id) {
+    const idx = AppState.informes.findIndex(i => i.id === _informe.id);
+    if (idx !== -1) AppState.informes[idx] = nuevoInforme;
+  } else {
+    AppState.informes.push(nuevoInforme);
+  }
+
+  persist('informe', 'upsert', nuevoInforme);
+  closeModal('modal-informe');
+  renderInformes();
+}
+
+/* ================================================================
+   SECCIÓN 13: AJUSTES
+   ================================================================ */
+
+/**
+ * Establece el tema de la app.
+ * @param {'light'|'dark'|'auto'} theme
+ */
+function setTheme(theme) {
+  AppState.theme = theme;
+  applyTheme();
+  Storage.saveConfig();
+  syncSettingsUI();
+}
+
+function applyTheme() {
+  const theme = AppState.theme;
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else if (theme === 'light') {
+    document.documentElement.classList.remove('dark');
+  } else {
+    // auto: seguir preferencia del sistema
+    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }
+}
+
+// Escuchar cambios del sistema en modo 'auto'
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (AppState.theme === 'auto') applyTheme();
+});
+
+/**
+ * Establece el primer día de la semana.
+ * @param {number} day - 0=domingo, 1=lunes
+ */
+function setWeekStart(day) {
+  AppState.weekStart = day;
+  Storage.saveConfig();
+  syncSettingsUI();
+  renderCalendar();
+}
+
+function changeMaxShifts(delta) {
+  const val = Math.max(1, Math.min(3, AppState.maxShiftsPerDay + delta));
+  AppState.maxShiftsPerDay = val;
+  document.getElementById('max-shifts-val').textContent = val;
+  Storage.saveConfig();
+  renderCalendar();
+}
+
+/**
+ * Sincroniza la UI de ajustes con el estado actual.
+ */
+function syncSettingsUI() {
+  // Tema
+  document.querySelectorAll('#theme-control .segment-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.theme === AppState.theme);
+  });
+  // Primer día
+  document.querySelectorAll('#weekstart-control .segment-btn').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.start) === AppState.weekStart);
+  });
+  // Max turnos
+  document.getElementById('max-shifts-val').textContent = AppState.maxShiftsPerDay;
+}
+
+/* ================================================================
+   SECCIÓN 14: UTILIDADES
+   ================================================================ */
+
+/**
+ * Genera un UUID v4 válido para Supabase.
+ * Usa crypto.randomUUID() si está disponible, si no construye uno manualmente.
+ */
+function genUUID() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  // Fallback manual RFC 4122 v4
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0;
+    return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+  });
+}
+
+/**
+ * Convierte una fecha JS a string 'YYYY-MM-DD'.
+ */
+function dateToStr(date) {
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
+}
+
+/**
+ * Obtiene las iniciales del lugar para el avatar.
+ * Ej: "ESE" → "ES", "Hospital San José" → "HS"
+ */
+function getInitials(lugar) {
+  const words = lugar.trim().split(/\s+/);
+  if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+  return (words[0][0] + words[1][0]).toUpperCase();
+}
+
+/**
+ * Formatea una hora 'HH:MM' a formato am/pm Colombia.
+ * Ej: '07:00' → '7:00 a. m.'
+ */
+function formatTime(timeStr) {
+  if (!timeStr) return '';
+  const [h, m] = timeStr.split(':').map(Number);
+  const ampm = h < 12 ? 'a. m.' : 'p. m.';
+  const h12  = h % 12 || 12;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+/**
+ * Formatea un número como moneda.
+ */
+function formatMoney(amount) {
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 0,
+  }).format(amount);
+}
+
+/**
+ * Formatea un número con puntos de miles (sin símbolo de moneda).
+ * Ej: 100000 → "100.000"
+ */
+function formatNumberInput(value) {
+  if (!value && value !== 0) return '';
+  return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0 }).format(value);
+}
+
+/**
+ * Extrae el valor numérico de un input de dinero (elimina puntos/comas).
+ * Ej: "100.000" → 100000
+ */
+function parseMoney(str) {
+  if (!str) return 0;
+  // Eliminar cualquier caracter no numérico excepto punto decimal o coma
+  const clean = String(str).replace(/\./g, '').replace(',', '.');
+  return parseFloat(clean) || 0;
+}
+
+/**
+ * Maneja el evento oninput de un campo monetario con formato.
+ * Reformatea el valor mientras el usuario escribe.
+ */
+function onMoneyInput(el, storeCallback) {
+  // Guardar posición del cursor
+  const raw = parseMoney(el.value);
+  storeCallback(raw);
+  // Reformatear mostrando puntos de miles
+  const formatted = raw ? formatNumberInput(raw) : '';
+  el.value = formatted;
+}
+
+/* ================================================================
+   SECCIÓN 16: OVERRIDE DE HORARIO POR DÍA
+   Override permite modificar hora inicio/fin/todo el día de una
+   asignación específica sin afectar la plantilla ni otros días.
+   ================================================================ */
+
+let _overrideAssignmentId = null;
+let _overrideAllDay = false;
+
+/**
+ * Abre el modal para sobrescribir el horario de una asignación
+ * en un día específico.
+ */
+function openOverrideModal(assignmentId, dateStr) {
+  _overrideAssignmentId = assignmentId;
+  const assignment = AppState.assignments.find(a => a.id === assignmentId);
+  if (!assignment) return;
+  const shift = AppState.shifts.find(s => s.id === assignment.shiftId);
+  if (!shift) return;
+
+  // Prellenar con override existente o con la plantilla
+  document.getElementById('override-shift-name').textContent = `${shift.lugar} - ${shift.nombre}`;
+  document.getElementById('override-inicio').value = assignment.overrideInicio || shift.inicio;
+  document.getElementById('override-fin').value   = assignment.overrideFin    || shift.fin;
+  _overrideAllDay = assignment.overrideAllDay !== undefined ? assignment.overrideAllDay : (shift.allDay || false);
+  updateOverrideAlldayToggle();
+
+  // Fecha legible
+  const [y, m, d] = dateStr.split('-').map(Number);
+  document.getElementById('override-fecha-label').textContent =
+    `Solo para el ${d} de ${MONTHS_ES[m-1]} de ${y}`;
+
+  openModal('modal-override-horario');
+}
+
+function toggleOverrideAllDay() {
+  _overrideAllDay = !_overrideAllDay;
+  updateOverrideAlldayToggle();
+}
+
+function updateOverrideAlldayToggle() {
+  const toggle = document.getElementById('override-allday-toggle');
+  const finInput = document.getElementById('override-fin');
+  if (_overrideAllDay) {
+    toggle.classList.add('on');
+    finInput.disabled = true;
+  } else {
+    toggle.classList.remove('on');
+    finInput.disabled = false;
+  }
+}
+
+function saveOverride() {
+  const inicio = document.getElementById('override-inicio').value;
+  const fin    = document.getElementById('override-fin').value;
+  if (!_overrideAllDay && (!inicio || !fin)) {
+    alert('Por favor completa los horarios o selecciona "Todo el día".');
+    return;
+  }
+  const totalHoras = calcHoras(inicio, fin, _overrideAllDay);
+  const idx = AppState.assignments.findIndex(a => a.id === _overrideAssignmentId);
+  if (idx !== -1) {
+    AppState.assignments[idx] = {
+      ...AppState.assignments[idx],
+      overrideInicio: _overrideAllDay ? null : inicio,
+      overrideFin:    _overrideAllDay ? null : fin,
+      overrideAllDay: _overrideAllDay,
+      overrideHoras:  totalHoras,
+    };
+    persist('assignment', 'upsert', AppState.assignments[idx]);
+  }
+  closeModal('modal-override-horario');
+  renderCalendar();
+  if (AppState.selectedDate) renderSheetContent(AppState.selectedDate);
+}
+
+function resetOverride() {
+  const idx = AppState.assignments.findIndex(a => a.id === _overrideAssignmentId);
+  if (idx !== -1) {
+    delete AppState.assignments[idx].overrideInicio;
+    delete AppState.assignments[idx].overrideFin;
+    delete AppState.assignments[idx].overrideAllDay;
+    delete AppState.assignments[idx].overrideHoras;
+    persist('assignment', 'upsert', AppState.assignments[idx]);
+  }
+  closeModal('modal-override-horario');
+  renderCalendar();
+  if (AppState.selectedDate) renderSheetContent(AppState.selectedDate);
+}
+
+/* ================================================================
+   SECCIÓN 15: INICIALIZACIÓN
+   ================================================================ */
+function init() {
+  Storage.load();
+  applyTheme();
+  syncSettingsUI();
+  renderCalendar();
+  renderShiftsList();
+
+  const now = new Date();
+  AppState.informePeriod = { year: now.getFullYear(), month: now.getMonth() };
+  renderInformes();
+  renderColorGrid();
+
+  // FABs: solo calendario visible al inicio
+  document.getElementById('fab-turnos').style.display   = 'none';
+  document.getElementById('fab-informes').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+<!-- ============================================================
+     MODAL: NUEVO / EDITAR INFORME
+     ============================================================ -->
+<div class="modal-overlay" id="modal-informe" onclick="handleModalOverlayClick(event,'modal-informe')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title" id="modal-informe-title">Nuevo Informe</span>
+      <button class="modal-close" onclick="closeModal('modal-informe')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll" id="modal-informe-scroll">
+
+      <!-- Título -->
+      <div class="form-group">
+        <label class="form-label">Título</label>
+        <input type="text" class="form-input" id="informe-titulo" placeholder="Ej: E.S.E Santiago, Sogamoso...">
+      </div>
+
+      <!-- Turnos incluidos -->
+      <div class="form-group">
+        <label class="form-label">Turnos incluidos</label>
+        <div id="informe-turnos-list" style="background:var(--bg-primary);border-radius:12px;border:1.5px solid var(--border);overflow:hidden;"></div>
+      </div>
+
+      <!-- Sección Pagos -->
+      <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Pagos</div>
+
+      <!-- Salario por hora (pago base) -->
+      <div style="background:var(--bg-primary);border-radius:12px;border:1.5px solid var(--border);padding:12px 14px;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">Salario base</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center;">
+          <div>
+            <label class="form-label" style="margin-bottom:4px;">Nombre</label>
+            <input type="text" class="form-input" id="informe-salario-nombre" value="Salario por hora" style="font-size:13px;padding:8px 10px;">
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px;">Valor/hora</label>
+            <div class="input-money-wrap">
+              <span class="money-prefix">$</span>
+              <input type="text" inputmode="numeric" class="form-input" id="informe-salario-valor" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;" oninput="onMoneyInput(this, v => {})">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pagos adicionales por hora (por tipo de turno) -->
+      <div id="informe-pagos-extra-container"></div>
+
+      <!-- Pagos adicionales fijos -->
+      <div id="informe-pagos-fijos-container"></div>
+
+      <!-- Botones añadir pagos -->
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <button onclick="addPagoExtra()" style="width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--border);background:transparent;color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">add</span> Añadir pago por hora
+        </button>
+        <button onclick="addPagoFijo()" style="width:100%;padding:11px;border-radius:10px;border:1.5px dashed var(--border);background:transparent;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+          <span class="material-symbols-rounded" style="font-size:16px;">add</span> Añadir pago adicional
+        </button>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" id="btn-guardar-informe" onclick="saveInforme()">Guardar informe</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: SELECCIONAR TURNO PARA UN DÍA
+     ============================================================ -->
+<div class="modal-overlay" id="modal-select-shift" onclick="handleModalOverlayClick(event,'modal-select-shift')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Añadir turno</span>
+      <button class="modal-close" onclick="closeModal('modal-select-shift')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll" style="padding:8px 0;">
+      <div style="padding:0 20px 10px;font-size:13px;color:var(--text-secondary);">
+        Selecciona la plantilla que quieres añadir a este día.
+      </div>
+      <div id="shift-selector-list"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" style="background:var(--bg-primary);color:var(--accent);border:1.5px solid var(--accent);"
+        onclick="closeModal('modal-select-shift'); document.getElementById('edit-shift-id').value=''; openModal('modal-nuevo-turno');">
+        <span style="display:flex;align-items:center;gap:6px;justify-content:center;">
+          <span class="material-symbols-rounded" style="font-size:18px;">add</span>
+          Crear nueva plantilla
+        </span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: OVERRIDE HORARIO (solo este día)
+     ============================================================ -->
+<div class="modal-overlay" id="modal-override-horario" onclick="handleModalOverlayClick(event,'modal-override-horario')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Editar horario</span>
+      <button class="modal-close" onclick="closeModal('modal-override-horario')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll">
+      <div style="background:var(--accent-light);border-radius:10px;padding:10px 14px;margin-bottom:16px;display:flex;gap:8px;align-items:center;">
+        <span class="material-symbols-rounded" style="font-size:18px;color:var(--accent);">info</span>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--text-primary);" id="override-shift-name"></div>
+          <div style="font-size:12px;color:var(--text-secondary);" id="override-fecha-label"></div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Todo el día</label>
+        <div class="form-toggle" onclick="toggleOverrideAllDay()">
+          <span class="form-toggle-label">Todo el día</span>
+          <div class="toggle-switch" id="override-allday-toggle"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hora inicio</label>
+          <input type="time" class="form-input" id="override-inicio">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora fin</label>
+          <input type="time" class="form-input" id="override-fin">
+        </div>
+      </div>
+      <button onclick="resetOverride()" style="width:100%;padding:10px;border-radius:10px;border:1px dashed var(--border);background:transparent;color:var(--text-secondary);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:4px;">
+        Restablecer horario de la plantilla
+      </button>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="saveOverride()">Guardar solo este día</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
