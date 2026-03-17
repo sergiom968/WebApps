@@ -4,7 +4,84 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TurnoShift</title>
+
+<!-- ── Favicon ── -->
 <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/calendar-plus.png">
+
+<!-- ============================================================
+     PWA — Progressive Web App
+     Permite instalar la app en Android desde Chrome.
+     ============================================================ -->
+<!-- Colores y tema -->
+<meta name="theme-color" content="#1A1A2E">
+<meta name="background-color" content="#F5F5F7">
+
+<!-- Descripción para la pantalla de instalación -->
+<meta name="description" content="Gestiona tus turnos de trabajo con TurnoShift">
+<meta name="application-name" content="TurnoShift">
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS (para compatibilidad) -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TurnoShift">
+
+<!-- Manifest embebido como blob (no requiere servidor) -->
+<script>
+(function() {
+  const manifest = {
+    name: "TurnoShift",
+    short_name: "TurnoShift",
+    description: "Gestiona tus turnos de trabajo",
+    start_url: "./",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#F5F5F7",
+    theme_color: "#1A1A2E",
+    lang: "es",
+    icons: [
+      {
+        src: "https://img.icons8.com/color/48/calendar-plus.png",
+        sizes: "48x48",
+        type: "image/png"
+      },
+      {
+        src: "https://img.icons8.com/color/96/calendar-plus.png",
+        sizes: "96x96",
+        type: "image/png"
+      },
+      {
+        src: "https://img.icons8.com/color/192/calendar-plus.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any maskable"
+      },
+      {
+        src: "https://img.icons8.com/color/512/calendar-plus.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any maskable"
+      }
+    ],
+    categories: ["productivity", "utilities"],
+    shortcuts: [
+      {
+        name: "Calendario",
+        short_name: "Calendario",
+        description: "Ver el calendario de turnos",
+        url: "./#calendario",
+        icons: [{ src: "https://img.icons8.com/color/96/calendar-plus.png", sizes: "96x96" }]
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
+  const url  = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel   = 'manifest';
+  link.href  = url;
+  document.head.appendChild(link);
+})();
+</script>
 
 <!-- ============================================================
      DEPENDENCIAS EXTERNAS
@@ -3841,6 +3918,74 @@ document.addEventListener('DOMContentLoaded', init);
     </div>
   </div>
 </div>
+
+<!-- ============================================================
+     SERVICE WORKER INLINE — Requerido para instalación PWA
+     Se registra un SW mínimo que permite que Chrome en Android
+     muestre el banner "Añadir a pantalla de inicio".
+     ============================================================ -->
+<script>
+if ('serviceWorker' in navigator) {
+  // SW embebido como blob — no requiere archivo externo
+  const swCode = `
+    const CACHE = 'turnoshift-v1';
+
+    // Al instalar: cachear los recursos externos principales
+    self.addEventListener('install', event => {
+      self.skipWaiting();
+      event.waitUntil(
+        caches.open(CACHE).then(cache => cache.addAll([
+          'https://cdn.tailwindcss.com',
+          'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+          'https://img.icons8.com/color/192/calendar-plus.png',
+          'https://img.icons8.com/color/512/calendar-plus.png',
+        ]).catch(() => {}))
+      );
+    });
+
+    // Al activar: tomar control inmediato
+    self.addEventListener('activate', event => {
+      event.waitUntil(clients.claim());
+    });
+
+    // Fetch: network-first para Supabase, cache-first para el resto
+    self.addEventListener('fetch', event => {
+      const url = event.request.url;
+
+      // Supabase siempre desde red (datos en tiempo real)
+      if (url.includes('supabase.co')) {
+        event.respondWith(fetch(event.request));
+        return;
+      }
+
+      // Para todo lo demás: intentar red, caer en caché
+      event.respondWith(
+        fetch(event.request)
+          .then(response => {
+            // Guardar en caché si la respuesta es válida
+            if (response && response.status === 200 && response.type === 'basic') {
+              const clone = response.clone();
+              caches.open(CACHE).then(cache => cache.put(event.request, clone));
+            }
+            return response;
+          })
+          .catch(() => caches.match(event.request))
+      );
+    });
+  `;
+
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+
+  navigator.serviceWorker.register(swUrl, { scope: './' })
+    .then(reg => {
+      console.log('[TurnoShift] Service Worker registrado:', reg.scope);
+    })
+    .catch(err => {
+      console.warn('[TurnoShift] Service Worker no disponible:', err.message);
+    });
+}
+</script>
 
 </body>
 </html>
