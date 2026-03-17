@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>TurnoShift</title>
 
-<!-- ── Favicon ── -->
-<link rel="icon" type="image/png" href="https://img.icons8.com/color/48/calendar-plus.png">
+<!-- ── Favicon (reemplazado por el manifest JS al cargar) ── -->
+<link rel="icon" type="image/svg+xml" id="favicon-link" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Crect width='96' height='96' fill='%23fff'/%3E%3C/svg%3E">
 
 <!-- ============================================================
      PWA — Progressive Web App
@@ -29,6 +29,39 @@
 <!-- Manifest embebido como blob (no requiere servidor) -->
 <script>
 (function() {
+  // SVG personalizado del usuario — con fondo blanco para que
+  // Android lo muestre centrado al recortarlo en círculo.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="512" height="512" viewBox="0 0 96 96">
+    <!-- Fondo sólido blanco (zona segura maskable) -->
+    <rect width="96" height="96" fill="#FFFFFF"/>
+    <path d="M0 0 C1.98 0 3.96 0 6 0 C6 1.32 6 2.64 6 4 C19.2 4 32.4 4 46 4 C46 2.68 46 1.36 46 0 C47.98 0 49.96 0 52 0 C52 1.32 52 2.64 52 4 C52.95712891 3.98259766 52.95712891 3.98259766 53.93359375 3.96484375 C54.75988281 3.95582031 55.58617188 3.94679688 56.4375 3.9375 C57.26121094 3.92589844 58.08492188 3.91429687 58.93359375 3.90234375 C61 4 61 4 62 5 C62.08571617 6.35540307 62.10413334 7.71516751 62.09423828 9.07324219 C62.09026535 10.37029083 62.09026535 10.37029083 62.08621216 11.69354248 C62.08096527 12.63514221 62.07571838 13.57674194 62.0703125 14.546875 C62.0788989 16.52605045 62.08937562 18.50521844 62.1015625 20.484375 C62.11825381 23.61645073 62.12502541 26.74686905 62.09960938 29.87890625 C62.07864287 32.89427077 62.1018873 35.90665276 62.1328125 38.921875 C62.11542023 39.85537781 62.09802795 40.78888062 62.08010864 41.75067139 C62.08097054 46.62991395 62.08097054 46.62991395 64.53045654 50.63171387 C66.35795364 51.96545704 66.35795364 51.96545704 68.26119995 52.97369385 C71.51640005 54.89503718 72.97458451 57.5039928 74 61 C74.94656395 67.8399534 75.15421738 74.10650859 71.4375 80.125 C67.42910368 85.09615201 64.07562922 87.58126976 57.7578125 88.44140625 C50.54108869 88.8061224 45.61900743 88.12916993 39.76953125 83.80078125 C38 82 38 82 37.00708008 79.42944336 C35.29641155 76.86345271 35.29641155 76.86345271 33.03761292 76.52815247 C30.38720738 76.3386393 27.77437465 76.3082214 25.1171875 76.328125 C24.14717804 76.31537537 23.17716858 76.30262573 22.17776489 76.28948975 C19.0765475 76.25310872 15.9764124 76.25048002 12.875 76.25 C9.76685027 76.22842562 6.65886691 76.20001861 3.55081177 76.16766357 C1.61554479 76.14982664 -0.31980943 76.13960957 -2.25515747 76.13751221 C-3.56188919 76.13180206 -3.56188919 76.13180206 -4.89501953 76.12597656 C-5.66540558 76.12551331 -6.43579163 76.12505005 -7.22952271 76.12457275 C-9 76 -9 76 -10 75 C-10.09956278 72.8273732 -10.12799719 70.65146894 -10.12939453 68.4765625 C-10.13114685 67.79527283 -10.13289917 67.11398315 -10.13470459 66.41204834 C-10.13912242 64.14967333 -10.13618538 61.88737587 -10.1328125 59.625 C-10.13348556 58.0594074 -10.1344556 56.4938149 -10.13571167 54.92822266 C-10.13718855 51.64289355 -10.13503441 48.35759158 -10.13037109 45.07226562 C-10.1246738 40.85179484 -10.12795286 36.63138764 -10.13394356 32.41091919 C-10.13754944 29.17683428 -10.13641046 25.94276455 -10.13381577 22.7086792 C-10.13314657 21.15207919 -10.13397466 19.59547782 -10.13629532 18.03887939 C-10.1388223 15.86702804 -10.13498065 13.69528104 -10.12939453 11.5234375 C-10.12859894 10.28513184 -10.12780334 9.04682617 -10.12698364 7.77099609 C-10 5 -10 5 -9 4 C-7.48071962 3.92820036 -5.95832518 3.91607993 -4.4375 3.9375 C-3.61121094 3.94652344 -2.78492188 3.95554687 -1.93359375 3.96484375 C-1.29550781 3.97644531 -0.65742188 3.98804688 0 4 C0 2.68 0 1.36 0 0 Z " fill="#1393DE" transform="translate(22,8)"/>
+    <path d="M0 0 C4.34009032 2.72517299 7.43224597 6.08936305 9 11 C9.96086517 17.83281901 10.14981013 24.11364526 6.4375 30.125 C2.42910368 35.09615201 -0.92437078 37.58126976 -7.2421875 38.44140625 C-14.47853373 38.80711407 -19.53226743 38.19464071 -25.29296875 33.65234375 C-29.74388652 29.34401831 -31.1210221 24.73871308 -31.25 18.6875 C-31.16333972 12.0904864 -28.65874212 6.65874212 -24 2 C-16.40633242 -3.28105063 -8.52104167 -3.27732372 0 0 Z " fill="#179B57" transform="translate(87,58)"/>
+    <path d="M0 0 C1.98 0 3.96 0 6 0 C6 1.32 6 2.64 6 4 C19.2 4 32.4 4 46 4 C46 2.68 46 1.36 46 0 C47.98 0 49.96 0 52 0 C52 1.32 52 2.64 52 4 C52.95712891 3.98259766 52.95712891 3.98259766 53.93359375 3.96484375 C54.75988281 3.95582031 55.58617188 3.94679688 56.4375 3.9375 C57.26121094 3.92589844 58.08492188 3.91429687 58.93359375 3.90234375 C61 4 61 4 62 5 C62 9.95 62 14.9 62 20 C38.24 20 14.48 20 -10 20 C-10 5 -10 5 -9 4 C-7.48071962 3.92820036 -5.95832518 3.91607993 -4.4375 3.9375 C-3.61121094 3.94652344 -2.78492188 3.95554687 -1.93359375 3.96484375 C-1.29550781 3.97644531 -0.65742188 3.98804688 0 4 C0 2.68 0 1.36 0 0 Z " fill="#0566B7" transform="translate(22,8)"/>
+    <path d="M0 0 C1.32 0 2.64 0 4 0 C4 2.64 4 5.28 4 8 C6.64 8 9.28 8 12 8 C12 9.32 12 10.64 12 12 C9.36 12 6.72 12 4 12 C4 14.64 4 17.28 4 20 C2.68 20 1.36 20 0 20 C0 17.36 0 14.72 0 12 C-2.64 12 -5.28 12 -8 12 C-8 10.68 -8 9.36 -8 8 C-5.36 8 -2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFC" transform="translate(74,66)"/>
+    <path d="M0 0 C1.98 0 3.96 0 6 0 C6 4.29 6 8.58 6 13 C4.35 13.33 2.7 13.66 1 14 C0 13 0 13 -0.09765625 10.05859375 C-0.08605469 8.86363281 -0.07445313 7.66867187 -0.0625 6.4375 C-0.05347656 5.23996094 -0.04445313 4.04242188 -0.03515625 2.80859375 C-0.02355469 1.88175781 -0.01195313 0.95492188 0 0 Z " fill="#3AC7F1" transform="translate(68,8)"/>
+    <path d="M0 0 C1.98 0 3.96 0 6 0 C6 4.29 6 8.58 6 13 C4.35 13.33 2.7 13.66 1 14 C0 13 0 13 -0.09765625 10.05859375 C-0.08605469 8.86363281 -0.07445313 7.66867187 -0.0625 6.4375 C-0.05347656 5.23996094 -0.04445313 4.04242188 -0.03515625 2.80859375 C-0.02355469 1.88175781 -0.01195313 0.95492188 0 0 Z " fill="#39C8F2" transform="translate(22,8)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(36,66)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(20,66)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(52,52)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(36,52)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(20,52)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(68,38)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(52,38)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 2.64 8 5.28 8 8 C5.36 8 2.72 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#FBFDFE" transform="translate(36,38)"/>
+    <path d="M0 0 C0 0.99 0 1.98 0 3 C-1.4609375 4.28125 -1.4609375 4.28125 -3.375 5.5 C-6.11457786 7.25874134 -7.11523332 8.17284998 -9 11 C-9.99 11 -10.98 11 -12 11 C-11.34 9.02 -10.68 7.04 -10 5 C-9.34 5 -8.68 5 -8 5 C-8 4.34 -8 3.68 -8 3 C-2.25 0 -2.25 0 0 0 Z " fill="#087BC5" transform="translate(68,55)"/>
+    <path d="M0 0 C1.98 0 3.96 0 6 0 C5.34 2.64 4.68 5.28 4 8 C2.68 8 1.36 8 0 8 C0 5.36 0 2.72 0 0 Z " fill="#E0E6E4" transform="translate(52,66)"/>
+    <path d="M0 0 C2.64 0 5.28 0 8 0 C8 1.32 8 2.64 8 4 C5.36 4.33 2.72 4.66 0 5 C0 3.35 0 1.7 0 0 Z " fill="#EDEFF0" transform="translate(68,52)"/>
+    <path d="M0 0 C0.99 0 1.98 0 3 0 C3.33 3.3 3.66 6.6 4 10 C3.01 10 2.02 10 1 10 C0.67 6.7 0.34 3.4 0 0 Z " fill="#0575C3" transform="translate(53,74)"/>
+    <path d="M0 0 C2.31 0.33 4.62 0.66 7 1 C7.33 1.99 7.66 2.98 8 4 C5.36 3.67 2.72 3.34 0 3 C0 2.01 0 1.02 0 0 Z " fill="#0475C0" transform="translate(76,53)"/>
+    <path d="M0 0 C0.99 0 1.98 0 3 0 C2.67 2.31 2.34 4.62 2 7 C1.34 7 0.68 7 0 7 C0 4.69 0 2.38 0 0 Z " fill="#FAFBFC" transform="translate(52,66)"/>
+  </svg>`;
+
+  const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+
+  // Actualizar favicon
+  const favicon = document.querySelector('#favicon-link');
+  if (favicon) favicon.href = svgDataUrl;
+
   const manifest = {
     name: "TurnoShift",
     short_name: "TurnoShift",
@@ -36,31 +69,21 @@
     start_url: "./",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#F5F5F7",
+    background_color: "#FFFFFF",
     theme_color: "#1A1A2E",
     lang: "es",
     icons: [
       {
-        src: "https://img.icons8.com/color/48/calendar-plus.png",
-        sizes: "48x48",
-        type: "image/png"
+        src: svgDataUrl,
+        sizes: "any",
+        type: "image/svg+xml",
+        purpose: "any"
       },
       {
-        src: "https://img.icons8.com/color/96/calendar-plus.png",
-        sizes: "96x96",
-        type: "image/png"
-      },
-      {
-        src: "https://img.icons8.com/color/192/calendar-plus.png",
-        sizes: "192x192",
-        type: "image/png",
-        purpose: "any maskable"
-      },
-      {
-        src: "https://img.icons8.com/color/512/calendar-plus.png",
+        src: svgDataUrl,
         sizes: "512x512",
-        type: "image/png",
-        purpose: "any maskable"
+        type: "image/svg+xml",
+        purpose: "maskable"
       }
     ],
     categories: ["productivity", "utilities"],
@@ -70,10 +93,11 @@
         short_name: "Calendario",
         description: "Ver el calendario de turnos",
         url: "./#calendario",
-        icons: [{ src: "https://img.icons8.com/color/96/calendar-plus.png", sizes: "96x96" }]
+        icons: [{ src: svgDataUrl, sizes: "any" }]
       }
     ]
   };
+
   const blob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const link = document.createElement('link');
@@ -1781,45 +1805,9 @@ const Storage = {
 
 /* ================================================================
    SECCIÓN 3: SUPABASE — CONEXIÓN Y CAPA DE DATOS
-   ================================================================
-   Cuando Supabase está conectado, TODAS las operaciones de lectura
-   y escritura van a la base de datos. El localStorage solo se usa
-   como fallback cuando no hay conexión.
-
-   Mapeo de tablas:
-     AppState.shifts      ↔ public.turnos
-     AppState.assignments ↔ public.asignaciones
-     AppState.events      ↔ public.eventos
-     AppState.informes    ↔ public.informes
+   App de un solo usuario — sin user_id en ninguna query.
+   RLS desactivado en Supabase (ver turnoshift_supabase.sql).
    ================================================================ */
-
-/* ================================================================
-   SECCIÓN 3: SUPABASE — CONEXIÓN Y CAPA DE DATOS
-   ================================================================
-   Sin autenticación explícita, se usa un device_id persistente
-   como user_id para identificar al usuario en Supabase.
-   RLS debe configurarse para aceptar este campo libre, o bien
-   desactivar RLS en el dashboard de Supabase para estas tablas.
-
-   Mapeo:
-     AppState.shifts      ↔ public.turnos
-     AppState.assignments ↔ public.asignaciones
-     AppState.events      ↔ public.eventos
-     AppState.informes    ↔ public.informes
-   ================================================================ */
-
-/**
- * Obtiene o genera un device_id único y persistente para este dispositivo.
- * Se usa como user_id en todas las operaciones de Supabase.
- */
-function getDeviceId() {
-  let id = localStorage.getItem('turnoshift_device_id');
-  if (!id) {
-    id = 'dev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
-    localStorage.setItem('turnoshift_device_id', id);
-  }
-  return id;
-}
 
 const DB = {
   async testConnection() {
@@ -1835,14 +1823,12 @@ const DB = {
   },
 
   async loadAll() {
-    const sb  = AppState.supabaseClient;
-    const uid = getDeviceId();
-
+    const sb = AppState.supabaseClient;
     const [t, a, e, i] = await Promise.all([
-      sb.from('turnos').select('*').eq('user_id', uid),
-      sb.from('asignaciones').select('*').eq('user_id', uid),
-      sb.from('eventos').select('*').eq('user_id', uid),
-      sb.from('informes').select('*').eq('user_id', uid),
+      sb.from('turnos').select('*'),
+      sb.from('asignaciones').select('*'),
+      sb.from('eventos').select('*'),
+      sb.from('informes').select('*'),
     ]);
 
     if (t.error || a.error || e.error || i.error) {
@@ -1882,7 +1868,7 @@ const DB = {
   async upsertShift(shift) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient.from('turnos').upsert({
-      id: shift.id, user_id: getDeviceId(),
+      id: shift.id,
       lugar: shift.lugar, nombre: shift.nombre,
       inicio: shift.inicio, fin: shift.fin,
       all_day: shift.allDay, total_horas: shift.totalHoras, color: shift.color,
@@ -1893,14 +1879,14 @@ const DB = {
   async deleteShift(id) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient
-      .from('turnos').delete().eq('id', id).eq('user_id', getDeviceId());
+      .from('turnos').delete().eq('id', id);
     if (error) { console.error('deleteShift:', error.message); throw error; }
   },
 
   async upsertAssignment(a) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient.from('asignaciones').upsert({
-      id: a.id, user_id: getDeviceId(), turno_id: a.shiftId, fecha: a.fecha,
+      id: a.id, turno_id: a.shiftId, fecha: a.fecha,
       override_inicio:  a.overrideInicio  ?? null,
       override_fin:     a.overrideFin     ?? null,
       override_all_day: a.overrideAllDay  ?? null,
@@ -1912,22 +1898,21 @@ const DB = {
   async deleteAssignment(id) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient
-      .from('asignaciones').delete().eq('id', id).eq('user_id', getDeviceId());
+      .from('asignaciones').delete().eq('id', id);
     if (error) { console.error('deleteAssignment:', error.message); throw error; }
   },
 
   async deleteAssignmentsByShift(shiftId) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient
-      .from('asignaciones').delete().eq('turno_id', shiftId).eq('user_id', getDeviceId());
+      .from('asignaciones').delete().eq('turno_id', shiftId);
     if (error) { console.error('deleteAssignmentsByShift:', error.message); throw error; }
   },
 
   async upsertEvento(ev) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient.from('eventos').upsert({
-      id: ev.id, user_id: getDeviceId(),
-      nombre: ev.nombre, fecha: ev.fecha, inicio: ev.inicio, fin: ev.fin,
+      id: ev.id, nombre: ev.nombre, fecha: ev.fecha, inicio: ev.inicio, fin: ev.fin,
     }, { onConflict: 'id' });
     if (error) { console.error('upsertEvento:', error.message); throw error; }
   },
@@ -1935,15 +1920,14 @@ const DB = {
   async deleteEvento(id) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient
-      .from('eventos').delete().eq('id', id).eq('user_id', getDeviceId());
+      .from('eventos').delete().eq('id', id);
     if (error) { console.error('deleteEvento:', error.message); throw error; }
   },
 
   async upsertInforme(inf) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient.from('informes').upsert({
-      id: inf.id, user_id: getDeviceId(),
-      titulo: inf.titulo, turno_ids: inf.turnoIds,
+      id: inf.id, titulo: inf.titulo, turno_ids: inf.turnoIds,
       salario_base: inf.salarioBase, pagos_extra: inf.pagosExtra, pagos_fijos: inf.pagosFijos,
     }, { onConflict: 'id' });
     if (error) { console.error('upsertInforme:', error.message); throw error; }
@@ -1952,7 +1936,7 @@ const DB = {
   async deleteInforme(id) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient
-      .from('informes').delete().eq('id', id).eq('user_id', getDeviceId());
+      .from('informes').delete().eq('id', id);
     if (error) { console.error('deleteInforme:', error.message); throw error; }
   },
 };
