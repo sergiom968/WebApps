@@ -29,11 +29,13 @@
 <!-- Manifest embebido como blob (no requiere servidor) -->
 <script>
 (function() {
-  // SVG personalizado del usuario — con fondo blanco para que
-  // Android lo muestre centrado al recortarlo en círculo.
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="512" height="512" viewBox="0 0 96 96">
-    <!-- Fondo sólido blanco (zona segura maskable) -->
-    <rect width="96" height="96" fill="#FFFFFF"/>
+  // Ícono: el SVG original es 96×96 pero el contenido usa coordenadas
+  // con translate negativo (mínimo -10 en X). Lo envolvemos en un SVG
+  // de 116×96 con un translate(10,0) para que todo quede visible,
+  // luego lo centramos en un canvas cuadrado de 116×116 con padding
+  // lateral para que en Android se vea bien proporcionado.
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-10 0 106 96" width="512" height="512">
+    <rect x="-10" y="0" width="116" height="96" fill="#FFFFFF"/>
     <path d="M0 0 C1.98 0 3.96 0 6 0 C6 1.32 6 2.64 6 4 C19.2 4 32.4 4 46 4 C46 2.68 46 1.36 46 0 C47.98 0 49.96 0 52 0 C52 1.32 52 2.64 52 4 C52.95712891 3.98259766 52.95712891 3.98259766 53.93359375 3.96484375 C54.75988281 3.95582031 55.58617188 3.94679688 56.4375 3.9375 C57.26121094 3.92589844 58.08492188 3.91429687 58.93359375 3.90234375 C61 4 61 4 62 5 C62.08571617 6.35540307 62.10413334 7.71516751 62.09423828 9.07324219 C62.09026535 10.37029083 62.09026535 10.37029083 62.08621216 11.69354248 C62.08096527 12.63514221 62.07571838 13.57674194 62.0703125 14.546875 C62.0788989 16.52605045 62.08937562 18.50521844 62.1015625 20.484375 C62.11825381 23.61645073 62.12502541 26.74686905 62.09960938 29.87890625 C62.07864287 32.89427077 62.1018873 35.90665276 62.1328125 38.921875 C62.11542023 39.85537781 62.09802795 40.78888062 62.08010864 41.75067139 C62.08097054 46.62991395 62.08097054 46.62991395 64.53045654 50.63171387 C66.35795364 51.96545704 66.35795364 51.96545704 68.26119995 52.97369385 C71.51640005 54.89503718 72.97458451 57.5039928 74 61 C74.94656395 67.8399534 75.15421738 74.10650859 71.4375 80.125 C67.42910368 85.09615201 64.07562922 87.58126976 57.7578125 88.44140625 C50.54108869 88.8061224 45.61900743 88.12916993 39.76953125 83.80078125 C38 82 38 82 37.00708008 79.42944336 C35.29641155 76.86345271 35.29641155 76.86345271 33.03761292 76.52815247 C30.38720738 76.3386393 27.77437465 76.3082214 25.1171875 76.328125 C24.14717804 76.31537537 23.17716858 76.30262573 22.17776489 76.28948975 C19.0765475 76.25310872 15.9764124 76.25048002 12.875 76.25 C9.76685027 76.22842562 6.65886691 76.20001861 3.55081177 76.16766357 C1.61554479 76.14982664 -0.31980943 76.13960957 -2.25515747 76.13751221 C-3.56188919 76.13180206 -3.56188919 76.13180206 -4.89501953 76.12597656 C-5.66540558 76.12551331 -6.43579163 76.12505005 -7.22952271 76.12457275 C-9 76 -9 76 -10 75 C-10.09956278 72.8273732 -10.12799719 70.65146894 -10.12939453 68.4765625 C-10.13114685 67.79527283 -10.13289917 67.11398315 -10.13470459 66.41204834 C-10.13912242 64.14967333 -10.13618538 61.88737587 -10.1328125 59.625 C-10.13348556 58.0594074 -10.1344556 56.4938149 -10.13571167 54.92822266 C-10.13718855 51.64289355 -10.13503441 48.35759158 -10.13037109 45.07226562 C-10.1246738 40.85179484 -10.12795286 36.63138764 -10.13394356 32.41091919 C-10.13754944 29.17683428 -10.13641046 25.94276455 -10.13381577 22.7086792 C-10.13314657 21.15207919 -10.13397466 19.59547782 -10.13629532 18.03887939 C-10.1388223 15.86702804 -10.13498065 13.69528104 -10.12939453 11.5234375 C-10.12859894 10.28513184 -10.12780334 9.04682617 -10.12698364 7.77099609 C-10 5 -10 5 -9 4 C-7.48071962 3.92820036 -5.95832518 3.91607993 -4.4375 3.9375 C-3.61121094 3.94652344 -2.78492188 3.95554687 -1.93359375 3.96484375 C-1.29550781 3.97644531 -0.65742188 3.98804688 0 4 C0 2.68 0 1.36 0 0 Z " fill="#1393DE" transform="translate(22,8)"/>
     <path d="M0 0 C4.34009032 2.72517299 7.43224597 6.08936305 9 11 C9.96086517 17.83281901 10.14981013 24.11364526 6.4375 30.125 C2.42910368 35.09615201 -0.92437078 37.58126976 -7.2421875 38.44140625 C-14.47853373 38.80711407 -19.53226743 38.19464071 -25.29296875 33.65234375 C-29.74388652 29.34401831 -31.1210221 24.73871308 -31.25 18.6875 C-31.16333972 12.0904864 -28.65874212 6.65874212 -24 2 C-16.40633242 -3.28105063 -8.52104167 -3.27732372 0 0 Z " fill="#179B57" transform="translate(87,58)"/>
     <path d="M0 0 C1.98 0 3.96 0 6 0 C6 1.32 6 2.64 6 4 C19.2 4 32.4 4 46 4 C46 2.68 46 1.36 46 0 C47.98 0 49.96 0 52 0 C52 1.32 52 2.64 52 4 C52.95712891 3.98259766 52.95712891 3.98259766 53.93359375 3.96484375 C54.75988281 3.95582031 55.58617188 3.94679688 56.4375 3.9375 C57.26121094 3.92589844 58.08492188 3.91429687 58.93359375 3.90234375 C61 4 61 4 62 5 C62 9.95 62 14.9 62 20 C38.24 20 14.48 20 -10 20 C-10 5 -10 5 -9 4 C-7.48071962 3.92820036 -5.95832518 3.91607993 -4.4375 3.9375 C-3.61121094 3.94652344 -2.78492188 3.95554687 -1.93359375 3.96484375 C-1.29550781 3.97644531 -0.65742188 3.98804688 0 4 C0 2.68 0 1.36 0 0 Z " fill="#0566B7" transform="translate(22,8)"/>
@@ -3349,7 +3351,7 @@ function renderPagosExtra() {
           <label class="form-label" style="margin-bottom:4px;">Valor/hora</label>
           <div class="input-money-wrap">
             <span class="money-prefix">$</span>
-            <input type="text" inputmode="numeric" class="form-input" value="${pe.valorHora ? formatNumberInput(pe.valorHora) : ''}" oninput="onMoneyInput(this, v => _informe.pagosExtra[${idx}].valorHora=v)" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;">
+            <input type="text" inputmode="decimal" class="form-input" value="${pe.valorHora ? formatNumberInput(pe.valorHora) : ''}" oninput="onMoneyInput(this, v => _informe.pagosExtra[${idx}].valorHora=v)" onblur="onMoneyBlur(this, v => _informe.pagosExtra[${idx}].valorHora=v)" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;">
           </div>
         </div>
       </div>
@@ -3423,7 +3425,7 @@ function renderPagosFijos() {
           <label class="form-label" style="margin-bottom:4px;">Valor</label>
           <div class="input-money-wrap">
             <span class="money-prefix">$</span>
-            <input type="text" inputmode="numeric" class="form-input" value="${pf.valor ? formatNumberInput(pf.valor) : ''}" oninput="onMoneyInput(this, v => _informe.pagosFijos[${idx}].valor=v)" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;">
+            <input type="text" inputmode="decimal" class="form-input" value="${pf.valor ? formatNumberInput(pf.valor) : ''}" oninput="onMoneyInput(this, v => _informe.pagosFijos[${idx}].valor=v)" onblur="onMoneyBlur(this, v => _informe.pagosFijos[${idx}].valor=v)" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;">
           </div>
         </div>
       </div>
@@ -3601,47 +3603,92 @@ function formatTime(timeStr) {
 }
 
 /**
- * Formatea un número como moneda.
+ * Formatea un número como moneda COP con siempre 2 decimales.
+ * Ej: 99225.5 → "$99.225,50"  |  1500000 → "$1.500.000,00"
  */
 function formatMoney(amount) {
   return new Intl.NumberFormat('es-CO', {
     style: 'currency',
     currency: 'COP',
-    minimumFractionDigits: 0,
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 
 /**
- * Formatea un número con puntos de miles (sin símbolo de moneda).
- * Ej: 100000 → "100.000"
+ * Formatea un número con puntos de miles y siempre 2 decimales con coma.
+ * Ej: 99225    → "99.225,00"
+ *     99225.5  → "99.225,50"
+ *     1500000  → "1.500.000,00"
  */
 function formatNumberInput(value) {
-  if (!value && value !== 0) return '';
-  return new Intl.NumberFormat('es-CO', { minimumFractionDigits: 0 }).format(value);
+  if (value === null || value === undefined || value === '') return '';
+  return new Intl.NumberFormat('es-CO', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
 }
 
 /**
- * Extrae el valor numérico de un input de dinero (elimina puntos/comas).
- * Ej: "100.000" → 100000
+ * Extrae el valor numérico de un string monetario.
+ * Separador de miles: punto. Separador decimal: coma.
+ * Ej: "1.500.000,50" → 1500000.50  |  "99225" → 99225
  */
 function parseMoney(str) {
   if (!str) return 0;
-  // Eliminar cualquier caracter no numérico excepto punto decimal o coma
   const clean = String(str).replace(/\./g, '').replace(',', '.');
   return parseFloat(clean) || 0;
 }
 
 /**
- * Maneja el evento oninput de un campo monetario con formato.
- * Reformatea el valor mientras el usuario escribe.
+ * Formatea un input monetario en tiempo real mientras el usuario escribe.
+ * Reglas:
+ * - Permite escribir dígitos y la coma decimal libremente
+ * - Aplica puntos de miles a la parte entera en tiempo real
+ * - No mueve el cursor ni bloquea la coma
+ * - Al terminar (onblur) fuerza siempre 2 decimales
  */
 function onMoneyInput(el, storeCallback) {
-  // Guardar posición del cursor
+  const raw = el.value;
+
+  // Separar parte entera y decimal
+  const hasComma   = raw.includes(',');
+  const parts      = raw.split(',');
+  const intRaw     = parts[0].replace(/\./g, '').replace(/\D/g, ''); // solo dígitos
+  const decRaw     = hasComma ? (parts[1] || '').replace(/\D/g, '').slice(0, 2) : null;
+
+  // Formatear parte entera con puntos de miles
+  const intFormatted = intRaw
+    ? new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 }).format(parseInt(intRaw, 10))
+    : '';
+
+  // Reconstruir valor mostrado
+  let display;
+  if (hasComma) {
+    display = intFormatted + ',' + (decRaw ?? '');
+  } else {
+    display = intFormatted;
+  }
+
+  // Guardar posición del cursor antes de cambiar el valor
+  const cursorPos = el.selectionStart;
+  const prevLen   = el.value.length;
+  el.value = display;
+  // Ajustar cursor
+  const newLen = el.value.length;
+  el.setSelectionRange(cursorPos + (newLen - prevLen), cursorPos + (newLen - prevLen));
+
+  storeCallback(parseMoney(display));
+}
+
+/**
+ * Al salir del campo: fuerza el formato completo con 2 decimales siempre.
+ * Ej: "99.225" → "99.225,00"  |  "99.225,5" → "99.225,50"
+ */
+function onMoneyBlur(el, storeCallback) {
   const raw = parseMoney(el.value);
   storeCallback(raw);
-  // Reformatear mostrando puntos de miles
-  const formatted = raw ? formatNumberInput(raw) : '';
-  el.value = formatted;
+  el.value = raw || raw === 0 ? formatNumberInput(raw) : '';
 }
 
 /* ================================================================
@@ -3797,7 +3844,7 @@ document.addEventListener('DOMContentLoaded', init);
             <label class="form-label" style="margin-bottom:4px;">Valor/hora</label>
             <div class="input-money-wrap">
               <span class="money-prefix">$</span>
-              <input type="text" inputmode="numeric" class="form-input" id="informe-salario-valor" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;" oninput="onMoneyInput(this, v => {})">
+              <input type="text" inputmode="decimal" class="form-input" id="informe-salario-valor" placeholder="0" style="font-size:13px;padding:8px 10px 8px 22px;" oninput="onMoneyInput(this, v => {})" onblur="onMoneyBlur(this, v => {})">
             </div>
           </div>
         </div>
@@ -3904,70 +3951,68 @@ document.addEventListener('DOMContentLoaded', init);
 </div>
 
 <!-- ============================================================
-     SERVICE WORKER INLINE — Requerido para instalación PWA
-     Se registra un SW mínimo que permite que Chrome en Android
-     muestre el banner "Añadir a pantalla de inicio".
+     SERVICE WORKER — Requerido para instalación PWA real en Android
      ============================================================ -->
 <script>
 if ('serviceWorker' in navigator) {
-  // SW embebido como blob — no requiere archivo externo
   const swCode = `
-    const CACHE = 'turnoshift-v1';
+    const CACHE = 'turnoshift-v2';
+    const ASSETS = [
+      'https://cdn.tailwindcss.com',
+      'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
+      'https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap',
+      'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js',
+    ];
 
-    // Al instalar: cachear los recursos externos principales
     self.addEventListener('install', event => {
       self.skipWaiting();
       event.waitUntil(
-        caches.open(CACHE).then(cache => cache.addAll([
-          'https://cdn.tailwindcss.com',
-          'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200',
-          'https://img.icons8.com/color/192/calendar-plus.png',
-          'https://img.icons8.com/color/512/calendar-plus.png',
-        ]).catch(() => {}))
+        caches.open(CACHE).then(cache =>
+          Promise.allSettled(ASSETS.map(url => cache.add(url)))
+        )
       );
     });
 
-    // Al activar: tomar control inmediato
     self.addEventListener('activate', event => {
-      event.waitUntil(clients.claim());
+      event.waitUntil(
+        caches.keys().then(keys =>
+          Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+        ).then(() => clients.claim())
+      );
     });
 
-    // Fetch: network-first para Supabase, cache-first para el resto
     self.addEventListener('fetch', event => {
       const url = event.request.url;
-
-      // Supabase siempre desde red (datos en tiempo real)
-      if (url.includes('supabase.co')) {
-        event.respondWith(fetch(event.request));
+      // Supabase y fonts siempre desde red
+      if (url.includes('supabase.co') || url.includes('fonts.g')) {
+        event.respondWith(
+          fetch(event.request).catch(() => caches.match(event.request))
+        );
         return;
       }
-
-      // Para todo lo demás: intentar red, caer en caché
+      // Resto: caché primero, red como fallback
       event.respondWith(
-        fetch(event.request)
-          .then(response => {
-            // Guardar en caché si la respuesta es válida
-            if (response && response.status === 200 && response.type === 'basic') {
+        caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          return fetch(event.request).then(response => {
+            if (response && response.status === 200) {
               const clone = response.clone();
               caches.open(CACHE).then(cache => cache.put(event.request, clone));
             }
             return response;
-          })
-          .catch(() => caches.match(event.request))
+          });
+        })
       );
     });
   `;
 
-  const blob = new Blob([swCode], { type: 'application/javascript' });
-  const swUrl = URL.createObjectURL(blob);
+  // Crear el SW como blob con tipo correcto
+  const blob   = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl  = URL.createObjectURL(blob);
 
-  navigator.serviceWorker.register(swUrl, { scope: './' })
-    .then(reg => {
-      console.log('[TurnoShift] Service Worker registrado:', reg.scope);
-    })
-    .catch(err => {
-      console.warn('[TurnoShift] Service Worker no disponible:', err.message);
-    });
+  navigator.serviceWorker.register(swUrl)
+    .then(reg => console.log('[TurnoShift] SW registrado, scope:', reg.scope))
+    .catch(err => console.warn('[TurnoShift] SW error:', err.message));
 }
 </script>
 
