@@ -10,9 +10,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-title" content="FinanzApp"/>
-<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/604/604553.png"/>
-<link rel="apple-touch-startup-image" href="https://cdn-icons-png.flaticon.com/512/604/604553.png"/>
-<link rel="shortcut icon" href="https://cdn-icons-png.flaticon.com/512/604/604553.png">
+<link rel="apple-touch-icon" href="https://sergiom968.github.io/images/wallet.png"/>
+<link rel="apple-touch-startup-image" href="https://sergiom968.github.io/images/wallet.png"/>
+<link rel="shortcut icon" href="https://sergiom968.github.io/images/wallet.png">
 <link href="https://cdn.jsdelivr.net/npm/daisyui@4.10.1/dist/full.min.css" rel="stylesheet"/>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
@@ -3463,7 +3463,7 @@ function rgbToHex(rgb) {
 // PWA: manifest inline + service worker como blob
 (function(){
   // Inyectar manifest inline
-  const mBlob = new Blob(['{"name": "FinanzApp", "short_name": "FinanzApp", "description": "Tu aliado financiero personal", "start_url": "./", "display": "standalone", "background_color": "#1e3a8a", "theme_color": "#1e40af", "orientation": "portrait-primary", "lang": "es", "icons": [{"src": "https://cdn-icons-png.flaticon.com/512/604/604553.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"}, {"src": "https://cdn-icons-png.flaticon.com/512/604/604553.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}], "categories": ["finance", "productivity"]}'], {type:'application/manifest+json'});
+  const mBlob = new Blob(['{"name": "FinanzApp", "short_name": "FinanzApp", "description": "Tu aliado financiero personal", "start_url": "./", "display": "standalone", "background_color": "#1e3a8a", "theme_color": "#1e40af", "orientation": "portrait-primary", "lang": "es", "icons": [{"src": "https://sergiom968.github.io/images/wallet.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"}, {"src": "https://sergiom968.github.io/images/wallet.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}], "categories": ["finance", "productivity"]}'], {type:'application/manifest+json'});
   const mUrl  = URL.createObjectURL(mBlob);
   const mLink = document.createElement('link');
   mLink.rel = 'manifest'; mLink.href = mUrl;
