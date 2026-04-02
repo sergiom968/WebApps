@@ -1229,7 +1229,7 @@ tailwind.config = {
         </div>
       </div>
     </div>
-    <div class="scroll-area">
+    <div class="scroll-area" id="informes-swipe-area">
       <div id="informes-content" style="padding:0 16px;"></div>
       <div style="height:90px;"></div>
     </div>
@@ -2212,7 +2212,7 @@ function toggleShiftAssignment(dateStr, shiftId) {
   }
 }
 
-/* ── Swipe para cambiar de mes ── */
+/* ── Swipe para cambiar de mes en calendario ── */
 let touchStartX = 0;
 let touchStartY = 0;
 
@@ -2230,22 +2230,52 @@ document.getElementById('cal-swipe-area').addEventListener('touchend', e => {
   }
 }, { passive: true });
 
+/* ── Swipe para cambiar de mes en informes ── */
+let infTouchStartX = 0;
+let infTouchStartY = 0;
+
+document.getElementById('informes-swipe-area').addEventListener('touchstart', e => {
+  infTouchStartX = e.touches[0].clientX;
+  infTouchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+document.getElementById('informes-swipe-area').addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - infTouchStartX;
+  const dy = e.changedTouches[0].clientY - infTouchStartY;
+  if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+    const delta = dx < 0 ? 1 : -1;
+    const { year, month } = AppState.informePeriod;
+    AppState.informePeriod = delta === 1
+      ? (month === 11 ? { year: year+1, month: 0 }  : { year, month: month+1 })
+      : (month === 0  ? { year: year-1, month: 11 } : { year, month: month-1 });
+    AppState.currentDate = new Date(AppState.informePeriod.year, AppState.informePeriod.month, 1);
+    renderInformes();
+  }
+}, { passive: true });
+
 /**
- * Avanza o retrocede el mes mostrado con animación de deslizamiento.
+ * Avanza o retrocede el mes — sincroniza calendario e informes.
  * @param {number} delta - +1 avanza, -1 retrocede
  */
 function navigateMonth(delta) {
   const d = AppState.currentDate;
   AppState.currentDate = new Date(d.getFullYear(), d.getMonth() + delta, 1);
+  // Sincronizar período de informes con el mes del calendario
+  AppState.informePeriod = {
+    year:  AppState.currentDate.getFullYear(),
+    month: AppState.currentDate.getMonth(),
+  };
 
   const grid = document.getElementById('calendar-grid');
   const animClass = delta > 0 ? 'anim-right' : 'anim-left';
   grid.classList.remove('anim-right', 'anim-left');
-  // forzar reflow para reiniciar la animación
   void grid.offsetWidth;
   renderCalendar();
   grid.classList.add(animClass);
   grid.addEventListener('animationend', () => grid.classList.remove(animClass), { once: true });
+
+  // Si informes está activo, también actualizarlo
+  if (AppState.currentView === 'informes') renderInformes();
 }
 
 /* ================================================================
@@ -2668,23 +2698,29 @@ function openNuevoTurno() {
 }
 
 function openModal(id) {
-  if (id === 'modal-nuevo-turno' && !document.getElementById('edit-shift-id').value) {
-    // Reset form si es nuevo
-    document.getElementById('shift-lugar').value = '';
-    document.getElementById('shift-nombre').value = '';
-    document.getElementById('shift-inicio').value = '07:00';
-    document.getElementById('shift-fin').value = '13:00';
-    _allDay = false;
-    _selectedColor = SHIFT_COLORS[0];
-    updateAlldayToggle();
-    renderColorGrid();
-    document.getElementById('modal-turno-title').textContent = 'Nuevo Turno';
+  if (id === 'modal-nuevo-turno') {
+    // Siempre resetear si el campo id está vacío (nuevo turno)
+    if (!document.getElementById('edit-shift-id').value) {
+      document.getElementById('shift-lugar').value  = '';
+      document.getElementById('shift-nombre').value = '';
+      document.getElementById('shift-inicio').value = '07:00';
+      document.getElementById('shift-fin').value    = '13:00';
+      _allDay = false;
+      _selectedColor = SHIFT_COLORS[0];
+      updateAlldayToggle();
+      renderColorGrid();
+      document.getElementById('modal-turno-title').textContent = 'Nuevo Turno';
+    }
   }
   document.getElementById(id).classList.add('visible');
 }
 
 function closeModal(id) {
   document.getElementById(id).classList.remove('visible');
+  // Limpiar edit-shift-id al cerrar para que el próximo abrir sea siempre nuevo
+  if (id === 'modal-nuevo-turno') {
+    document.getElementById('edit-shift-id').value = '';
+  }
 }
 
 function handleModalOverlayClick(event, id) {
@@ -3177,6 +3213,8 @@ document.getElementById('informe-prev').onclick = () => {
   AppState.informePeriod = month === 0
     ? { year: year-1, month: 11 }
     : { year, month: month-1 };
+  // Sincronizar calendario
+  AppState.currentDate = new Date(AppState.informePeriod.year, AppState.informePeriod.month, 1);
   renderInformes();
 };
 document.getElementById('informe-next').onclick = () => {
@@ -3184,6 +3222,8 @@ document.getElementById('informe-next').onclick = () => {
   AppState.informePeriod = month === 11
     ? { year: year+1, month: 0 }
     : { year, month: month+1 };
+  // Sincronizar calendario
+  AppState.currentDate = new Date(AppState.informePeriod.year, AppState.informePeriod.month, 1);
   renderInformes();
 };
 
