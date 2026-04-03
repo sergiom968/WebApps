@@ -963,6 +963,7 @@ body{background:#f1f5f9;min-height:100vh}
       <!-- Campos solo para "me deben" -->
       <div id="debt-owed-fields" class="col-span-2 grid grid-cols-2 gap-3" style="display:none">
         <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Cuenta para ingreso al pagar</span></label><div id="debt-acc-csel" class="csel-wrap"></div><input type="hidden" id="debt-acc-id"/></div>
+        <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Categoría del ingreso</span></label><select id="debt-cat-income" class="select select-bordered"><option value="">Sin categoría</option></select></div>
       </div>
 
       <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Notas</span></label><textarea id="debt-notes" class="textarea textarea-bordered" rows="2"></textarea></div>
@@ -1000,6 +1001,55 @@ body{background:#f1f5f9;min-height:100vh}
     <div class="modal-action">
       <button class="btn" onclick="document.getElementById('modal-verify-pay').close()">Cancelar</button>
       <button class="btn btn-success" onclick="confirmVerifyPay()">Confirmar pago</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- MODAL: Registrar cobro de deuda "me deben" -->
+<dialog id="modal-owed-pay" class="modal">
+  <div class="modal-box" style="max-width:420px">
+    <h3 class="font-bold text-lg mb-1">💰 Registrar cobro</h3>
+    <p class="text-sm text-base-content/60 mb-3">Registra un pago parcial o total que te hicieron.</p>
+    <div id="owedpay-alert" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:.85rem;color:#b91c1c;font-weight:500"></div>
+    <input type="hidden" id="owedpay-debt-id"/>
+    <div class="grid grid-cols-1 gap-3">
+      <div class="form-control">
+        <label class="label"><span class="label-text font-semibold">Deuda</span></label>
+        <input id="owedpay-name" class="input input-bordered" disabled/>
+      </div>
+      <div class="form-control">
+        <div class="alert alert-info py-2" style="font-size:.8rem">
+          Saldo pendiente: <b id="owedpay-remaining"></b>
+        </div>
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text font-semibold">Monto cobrado *</span></label>
+        <div class="money-wrap"><span class="money-prefix">$</span>
+          <input id="owedpay-amount" type="text" inputmode="decimal" placeholder="0" class="money-input" oninput="fmtInput(this)"/>
+        </div>
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text font-semibold">Fecha *</span></label>
+        <input id="owedpay-date" type="date" class="input input-bordered"/>
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text font-semibold">Acreditar en cuenta *</span></label>
+        <div id="owedpay-acc-csel" class="csel-wrap"></div>
+        <input type="hidden" id="owedpay-acc-id"/>
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text font-semibold">Categoría</span></label>
+        <select id="owedpay-cat" class="select select-bordered"><option value="">Sin categoría</option></select>
+      </div>
+      <div class="form-control">
+        <label class="label"><span class="label-text font-semibold">Notas</span></label>
+        <input id="owedpay-notes" type="text" placeholder="Opcional" class="input input-bordered"/>
+      </div>
+    </div>
+    <div class="modal-action">
+      <button class="btn" onclick="document.getElementById('modal-owed-pay').close()">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmOwedPay()">Registrar cobro</button>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
@@ -1942,8 +1992,12 @@ function renderRecPending(recs, debts=[]) {
     .filter(d => d.direction !== 'owed' && d.status === 'active' && d.payment_day)
     .filter(d => d.last_paid_month !== thisMth)   // ya pagado este mes → no mostrar
     .map(d => {
-      let pd = new Date(todayY, todayM, d.payment_day);
-      if (pd < today) pd = new Date(todayY, todayM + 1, d.payment_day);
+      // Fecha del pago en el mes actual
+      const pdThisMonth = new Date(todayY, todayM, d.payment_day);
+      // Si ya pasó (vencida sin pagar) → mostrar la fecha original del mes actual (NO saltar al siguiente)
+      // Si aún no llega → mostrar la fecha de este mes
+      // Solo saltar al mes siguiente si ya se pagó este mes (filtrado arriba)
+      const pd = pdThisMonth;
       return { _isDebt:true, _debt:d, id:d.id, name:d.name,
         amount: d.monthly_payment || 0, icon:'📋', auto_charge:false,
         next_date: `${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(d.payment_day).padStart(2,'0')}` };
@@ -1991,7 +2045,7 @@ async function renderBalWidget(accs, cards) {
   const tLim   = cards.reduce((s,c)=>s+(c.credit_limit||0),0);
   // También traer deudas para mostrar en el widget
   const debts  = await dbGet('debts');
-  const tDebts = debts.filter(d=>d.status==='active').reduce((s,d)=>s+(d.remaining_amount||0),0);
+  const tDebts = debts.filter(d=>d.status==='active' && d.direction!=='owed').reduce((s,d)=>s+(d.remaining_amount||0),0);
 
   // Tarjetas de resumen: 2x2 grid, fuente adaptable para no cortarse en móvil
   let html=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.875rem">
@@ -2036,13 +2090,14 @@ async function renderBalWidget(accs, cards) {
       </div>`;
     }).join('');
   }
-  if(debts.filter(d=>d.status==='active').length){
-    html+=`<p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:.5rem 0 .35rem">📉 Deudas</p>`;
-    html+=debts.filter(d=>d.status==='active').map(d=>{
+  const oweDebts = debts.filter(d=>d.status==='active' && d.direction!=='owed');
+  if(oweDebts.length){
+    html+=`<p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:.5rem 0 .35rem">📉 Deudas (yo debo)</p>`;
+    html+=oweDebts.map(d=>{
       const pct=d.total_amount>0?Math.min((1-d.remaining_amount/d.total_amount)*100,100):0;
       return `<div style="padding:.5rem .75rem;border-radius:10px;background:#fef2f2;border:1px solid #fecaca;margin-bottom:.35rem">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
-          <div style="min-width:0"><p style="font-weight:600;font-size:.85rem">${d.name}</p><p style="font-size:.72rem;color:#94a3b8">${d.creditor}</p></div>
+          <div style="min-width:0"><p style="font-weight:600;font-size:.85rem">${d.name}</p><p style="font-size:.72rem;color:#94a3b8">${d.creditor||''}</p></div>
           <p style="font-weight:700;font-size:.9rem;color:#dc2626;flex-shrink:0;margin-left:.5rem">${fmt(d.remaining_amount)}</p>
         </div>
         <div style="background:#fecaca;border-radius:99px;height:3px;overflow:hidden"><div style="width:${pct}%;height:100%;background:#22c55e;border-radius:99px"></div></div>
@@ -2676,9 +2731,8 @@ async function loadRec(){
     .filter(d=>d.direction!=='owed' && d.status==='active' && d.payment_day)
     .filter(d=>d.last_paid_month !== thisMonth)   // ya pagado este mes → no mostrar
     .map(d=>{
-      // Calcular próxima fecha de pago
-      let pd = new Date(now2.getFullYear(), now2.getMonth(), d.payment_day);
-      if(pd < now2) pd = new Date(now2.getFullYear(), now2.getMonth()+1, d.payment_day);
+      // Mostrar siempre la fecha del mes actual: si ya pasó = vencida, si no = próxima
+      const pd = new Date(now2.getFullYear(), now2.getMonth(), d.payment_day);
       return {
         _isDebt:true, id:d.id, name:d.name,
         amount: d.monthly_payment || 0,   // cuota mensual configurada
@@ -3207,7 +3261,9 @@ async function loadDebts(){
         ${d.payment_day?`<span>Día de pago: ${d.payment_day}</span>`:''}
       </div>
       <div style="display:flex;gap:4px;margin-top:.75rem;justify-content:flex-end">
-        ${!isPaid?`<button class="btn btn-success btn-xs" onclick="markDebtPaid('${d.id}')">✓ Pagada</button>`:''}
+        ${!isPaid && isOwed ? `<button class="btn btn-primary btn-xs" onclick="openOwedPayModal('${d.id}')">💰 Registrar cobro</button>` : ''}
+        ${!isPaid && isOwed ? `<button class="btn btn-success btn-xs" onclick="markDebtPaid('${d.id}')">✓ Cobrada</button>` : ''}
+        ${!isPaid && !isOwed ? `<button class="btn btn-success btn-xs" onclick="markDebtPaid('${d.id}')">✓ Pagada</button>` : ''}
         <button class="btn btn-ghost btn-xs" onclick="openDebtModal('${d.id}')">${editSvg}</button>
         <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('debts','${d.id}','la deuda')">${delSvg}</button>
       </div>
@@ -3225,11 +3281,85 @@ async function loadDebts(){
   el.innerHTML = html2;
 }
 
+// Abre modal para registrar cobro parcial/total de deuda "me deben"
+async function openOwedPayModal(id){
+  const debts = await dbGet('debts');
+  const d = debts.find(x=>x.id===id);
+  if(!d) return;
+  setV('owedpay-debt-id', id);
+  setV('owedpay-name', d.name);
+  document.getElementById('owedpay-remaining').textContent = fmt(d.remaining_amount);
+  setMoney('owedpay-amount', d.remaining_amount); // prellenar con saldo total
+  setV('owedpay-date', new Date().toISOString().split('T')[0]);
+  setV('owedpay-notes', '');
+  document.getElementById('owedpay-alert').style.display = 'none';
+  const accOpts = await buildSrcOptions('accounts', true);
+  renderCsel('owedpay-acc-csel','owedpay-acc-id', accOpts, '— Selecciona cuenta —');
+  // Poblar categorías de ingreso
+  const cats = await dbGet('categories');
+  const catSel = document.getElementById('owedpay-cat');
+  catSel.innerHTML = '<option value="">Sin categoría</option>';
+  cats.filter(c=>c.type==='income').forEach(c=>catSel.add(new Option(`${c.icon} ${c.name}`,c.id)));
+  // Pre-seleccionar cuenta configurada en la deuda
+  const modal = document.getElementById('modal-owed-pay');
+  modal.showModal();
+  requestAnimationFrame(()=>{
+    if(d.income_account_id) restoreCsel('owedpay-acc-csel','owedpay-acc-id', d.income_account_id);
+    if(d.income_category_id) setV('owedpay-cat', d.income_category_id);
+  });
+}
+
+// Confirma el cobro parcial/total de una deuda "me deben"
+async function confirmOwedPay(){
+  const id     = getV('owedpay-debt-id');
+  const accId  = getV('owedpay-acc-id');
+  const amount = getMoney('owedpay-amount');
+  const date   = getV('owedpay-date');
+  const alertEl = document.getElementById('owedpay-alert');
+  if(!amount || !date || !accId){
+    alertEl.style.display='block';
+    alertEl.textContent='⚠️ Completa todos los campos obligatorios.';
+    return;
+  }
+  const debts = await dbGet('debts');
+  const d = debts.find(x=>x.id===id);
+  if(!d) return;
+  if(amount > d.remaining_amount){
+    alertEl.style.display='block';
+    alertEl.textContent=`⚠️ El monto (${fmt(amount)}) supera el saldo pendiente (${fmt(d.remaining_amount)}).`;
+    return;
+  }
+  alertEl.style.display='none';
+  // 1. Registrar transacción de ingreso
+  const notes    = getV('owedpay-notes').trim();
+  const catId    = getV('owedpay-cat') || null;
+  await dbIns('transactions',{
+    type:'income',
+    description:`Cobro: ${d.name}`,
+    amount, date,
+    category_id: catId,
+    account_id: accId,
+    debt_id: id,
+    notes: notes || null
+  });
+  // 2. Acreditar en cuenta
+  const accs = await dbGet('accounts');
+  const acc  = accs.find(a=>a.id===accId);
+  if(acc) await dbUpd('accounts', accId, {balance:(acc.balance||0)+amount});
+  // 3. Reducir saldo pendiente
+  const newRem = Math.max(0, d.remaining_amount - amount);
+  await dbUpd('debts', id, {remaining_amount:newRem, status:newRem<=0?'paid':'active'});
+  document.getElementById('modal-owed-pay').close();
+  toast(`Cobro de ${fmt(amount)} registrado ✓`, 'success');
+  loadDebts();
+  loadDash();
+}
+
 async function markDebtPaid(id){
   const debts=await dbGet('debts'), d=debts.find(x=>x.id===id);
   if(!d) return;
   if(d.direction==='owed' && d.income_account_id){
-    await dbIns('transactions',{type:'income',description:`Cobro: ${d.name}`,amount:d.remaining_amount,date:new Date().toISOString().split('T')[0],account_id:d.income_account_id,notes:'Deuda cobrada'});
+    await dbIns('transactions',{type:'income',description:`Cobro: ${d.name}`,amount:d.remaining_amount,date:new Date().toISOString().split('T')[0],category_id:d.income_category_id||null,account_id:d.income_account_id,notes:'Deuda cobrada'});
     const accs=await dbGet('accounts'),acc=accs.find(a=>a.id===d.income_account_id);
     if(acc) await dbUpd('accounts',d.income_account_id,{balance:(acc.balance||0)+d.remaining_amount});
     toast(`Ingreso de ${fmt(d.remaining_amount)} registrado ✓`,'success');
@@ -3262,6 +3392,11 @@ async function openDebtModal(id=null){
     sel.innerHTML='<option value="">Sin categoría</option>';
     cats.filter(c=>c.type==='expense').forEach(c=>sel.add(new Option(`${c.icon} ${c.name}`,c.id)));
   });
+  const selInc=document.getElementById('debt-cat-income');
+  if(selInc){
+    selInc.innerHTML='<option value="">Sin categoría</option>';
+    cats.filter(c=>c.type==='income').forEach(c=>selInc.add(new Option(`${c.icon} ${c.name}`,c.id)));
+  }
   const accOpts=await buildSrcOptions('accounts',true);
   renderCsel('debt-acc-csel','debt-acc-id',accOpts,'— Selecciona cuenta —');
   renderCsel('debt-defacc-csel','debt-default-acc-id',accOpts,'— Sin cuenta por defecto —');
@@ -3282,6 +3417,7 @@ async function openDebtModal(id=null){
       if(d.capital_category_id) setV('debt-cat-capital',d.capital_category_id);
       if(d.interest_category_id) setV('debt-cat-interest',d.interest_category_id);
       if(d.income_account_id) restoreCsel('debt-acc-csel','debt-acc-id',d.income_account_id);
+      if(d.income_category_id) setV('debt-cat-income',d.income_category_id);
       if(d.default_account_id) restoreCsel('debt-defacc-csel','debt-default-acc-id',d.default_account_id);
     }
   }
@@ -3303,6 +3439,7 @@ async function saveDebt(){
     capital_category_id:dir==='owe'?(getV('debt-cat-capital')||null):null,
     interest_category_id:dir==='owe'?(getV('debt-cat-interest')||null):null,
     income_account_id:dir==='owed'?(getV('debt-acc-id')||null):null,
+    income_category_id:dir==='owed'?(getV('debt-cat-income')||null):null,
     monthly_payment:dir==='owe'?(getMoney('debt-monthly-payment')||0):0,
     default_account_id:dir==='owe'?(getV('debt-default-acc-id')||null):null,
     notes:getV('debt-notes').trim()||null,status:'active'
