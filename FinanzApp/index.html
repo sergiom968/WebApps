@@ -17,6 +17,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 /* ── Tema personalizado ── */
@@ -31,7 +32,10 @@ body{background:#f1f5f9;min-height:100vh}
 .nav-item{display:flex;align-items:center;gap:.75rem;padding:.75rem 1.25rem;margin:.15rem .75rem;border-radius:10px;cursor:pointer;color:rgba(255,255,255,.7);font-weight:500;font-size:.9rem;transition:all .2s;flex-shrink:0}
 .nav-item:hover{background:rgba(255,255,255,.12);color:#fff}
 .nav-item.active{background:rgba(255,255,255,.2);color:#fff;font-weight:600}
-.nav-icon{width:20px;text-align:center;font-size:1.1rem}
+.nav-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nav-icon svg{width:18px;height:18px;stroke-width:1.8}
+.li{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.li svg{stroke-width:1.8}
 .nav-section-title{color:rgba(255,255,255,.4);font-size:.7rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:1rem 1.5rem .25rem;flex-shrink:0}
 /* ── Layout principal ── */
 .main-content{margin-left:260px;padding:2rem;min-height:100vh;overflow-y:auto;height:100vh;box-sizing:border-box}
@@ -103,7 +107,8 @@ body{background:#f1f5f9;min-height:100vh}
 #mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:35;background:#fff;border-top:1px solid #e2e8f0;padding:.5rem .25rem;padding-bottom:calc(.5rem + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.08)}
 .mob-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:.35rem .4rem;border-radius:10px;cursor:pointer;color:#94a3b8;font-size:.58rem;font-weight:600;transition:all .2s;flex:1}
 .mob-item.active{color:#2563eb;background:#eff6ff}
-.mob-item .mob-ico{font-size:1.2rem;line-height:1.2}
+.mob-item .mob-ico{font-size:1.2rem;line-height:1.2;display:flex;align-items:center;justify-content:center;width:24px;height:24px}
+.mob-item .mob-ico svg{width:22px;height:22px;stroke-width:1.8}
 /* ── Overlay y header móvil ── */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:38}
 .overlay.open{display:block}
@@ -385,7 +390,7 @@ body{background:#f1f5f9;min-height:100vh}
 <body>
 
 <!-- LOADER -->
-<div id="app-loader">
+<div id="app-loader" style="position:fixed;inset:0;background:linear-gradient(135deg,#1e3a8a,#2563eb);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity .3s">
   <div style="font-size:3rem;margin-bottom:1rem">💰</div>
   <div style="color:#fff;font-size:1.3rem;font-weight:700">FinanzApp</div>
   <span class="loading loading-dots loading-md mt-3" style="color:#fff"></span>
@@ -394,10 +399,10 @@ body{background:#f1f5f9;min-height:100vh}
 <!-- MODAL: Configuración Supabase -->
 <dialog id="modal-config" class="modal">
   <div class="modal-box">
-    <h3 class="font-bold text-lg mb-1">⚙️ Configurar Supabase</h3>
+    <h3 class="font-bold text-lg mb-1"><i data-lucide="database" style="display:inline;width:18px;height:18px;vertical-align:middle;margin-right:6px"></i>Configurar Supabase</h3>
     <p class="text-sm text-base-content/60 mb-4">Credenciales en <b>Project Settings → API</b></p>
     <div class="form-control mb-3"><label class="label"><span class="label-text font-semibold">URL</span></label><input id="cfg-url" type="url" placeholder="https://xxxx.supabase.co" class="input input-bordered"/></div>
-    <div class="form-control mb-4"><label class="label"><span class="label-text font-semibold">Anon Key</span></label><input id="cfg-key" type="text" placeholder="eyJ..." class="input input-bordered"/></div>
+    <div class="form-control mb-4"><label class="label"><span class="label-text font-semibold">Anon Key</span></label><input id="cfg-key" type="password" placeholder="eyJ..." class="input input-bordered"/></div>
     <div class="modal-action">
       <button class="btn" onclick="document.getElementById('modal-config').close()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveConfig()">Conectar</button>
@@ -417,19 +422,19 @@ body{background:#f1f5f9;min-height:100vh}
     </div>
     <nav class="flex-1 py-3 overflow-y-auto">
       <div class="nav-section-title">Principal</div>
-      <div class="nav-item active" data-page="dashboard"    onclick="go('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
-      <div class="nav-item" data-page="transactions" onclick="go('transactions')"><span class="nav-icon">↕️</span>Transacciones</div>
+      <div class="nav-item active" data-page="dashboard"    onclick="go('dashboard')"><span class="nav-icon"><i data-lucide="layout-dashboard"></i></span>Dashboard</div>
+      <div class="nav-item" data-page="transactions" onclick="go('transactions')"><span class="nav-icon"><i data-lucide="arrow-left-right"></i></span>Transacciones</div>
       <div class="nav-section-title">Activos</div>
-      <div class="nav-item" data-page="accounts"    onclick="go('accounts')"><span class="nav-icon">🏦</span>Cuentas</div>
-      <div class="nav-item" data-page="cards"       onclick="go('cards')"><span class="nav-icon">💳</span>Tarjetas</div>
+      <div class="nav-item" data-page="accounts"    onclick="go('accounts')"><span class="nav-icon"><i data-lucide="landmark"></i></span>Cuentas</div>
+      <div class="nav-item" data-page="cards"       onclick="go('cards')"><span class="nav-icon"><i data-lucide="credit-card"></i></span>Tarjetas</div>
       <div class="nav-section-title">Planificación</div>
-      <div class="nav-item" data-page="recurring"   onclick="go('recurring')"><span class="nav-icon">🔁</span>Recurrentes</div>
-      <div class="nav-item" data-page="budgets"     onclick="go('budgets')"><span class="nav-icon">📋</span>Presupuestos</div>
-      <div class="nav-item" data-page="goals"       onclick="go('goals')"><span class="nav-icon">🎯</span>Metas</div>
-      <div class="nav-item" data-page="debts"       onclick="go('debts')"><span class="nav-icon">📉</span>Deudas</div>
-      <div class="nav-item" data-page="reports"     onclick="go('reports')"><span class="nav-icon">📈</span>Reportes</div>
+      <div class="nav-item" data-page="recurring"   onclick="go('recurring')"><span class="nav-icon"><i data-lucide="repeat"></i></span>Recurrentes</div>
+      <div class="nav-item" data-page="budgets"     onclick="go('budgets')"><span class="nav-icon"><i data-lucide="clipboard-list"></i></span>Presupuestos</div>
+      <div class="nav-item" data-page="goals"       onclick="go('goals')"><span class="nav-icon"><i data-lucide="target"></i></span>Metas</div>
+      <div class="nav-item" data-page="debts"       onclick="go('debts')"><span class="nav-icon"><i data-lucide="trending-down"></i></span>Deudas</div>
+      <div class="nav-item" data-page="reports"     onclick="go('reports')"><span class="nav-icon"><i data-lucide="bar-chart-2"></i></span>Reportes</div>
       <div class="nav-section-title">Configuración</div>
-      <div class="nav-item" data-page="categories"  onclick="go('categories')"><span class="nav-icon">🏷️</span>Categorías</div>
+      <div class="nav-item" data-page="categories"  onclick="go('categories')"><span class="nav-icon"><i data-lucide="tag"></i></span>Categorías</div>
     </nav>
     <div style="padding:1rem;border-top:1px solid rgba(255,255,255,.12)">
       <!-- Control de modo oscuro: sistema / claro / oscuro -->
@@ -441,7 +446,7 @@ body{background:#f1f5f9;min-height:100vh}
           <button class="dark-seg-btn" id="dm-on"   onclick="setDarkMode('dark')">🌙</button>
         </div>
       </div>
-      <div class="nav-item" onclick="document.getElementById('modal-config').showModal()"><span class="nav-icon">⚙️</span>Supabase</div>
+      <div class="nav-item" onclick="document.getElementById('modal-config').showModal()"><span class="nav-icon"><i data-lucide="database"></i></span>Supabase</div>
     </div>
   </aside>
 
@@ -464,7 +469,7 @@ body{background:#f1f5f9;min-height:100vh}
       <div class="flex justify-between items-center mb-4">
         <div><h2 style="font-size:1.5rem;font-weight:800;color:#0f172a">Dashboard</h2><p style="color:#64748b;font-size:.875rem" id="dash-date"></p></div>
         <div style="display:flex;gap:.5rem">
-          <button id="btn-edit-w" class="btn btn-ghost btn-sm" onclick="toggleWidgetEdit()" title="Personalizar">⚙️</button>
+          <button id="btn-edit-w" class="btn btn-ghost btn-sm" onclick="toggleWidgetEdit()" title="Personalizar"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
           <button class="btn btn-primary btn-sm" onclick="openTxnModal()">+ Nueva</button>
         </div>
       </div>
@@ -591,14 +596,21 @@ body{background:#f1f5f9;min-height:100vh}
 
     <!-- DEUDAS -->
     <div class="page" id="page-debts">
-      <div class="flex justify-between items-center mb-5">
+      <div class="flex justify-between items-center mb-4">
         <div><h2 style="font-size:1.5rem;font-weight:800">Deudas</h2><p style="color:#64748b;font-size:.875rem">Obligaciones financieras</p></div>
-        <button class="btn btn-primary btn-sm" onclick="openDebtModal()">+ Agregar</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <label class="cursor-pointer flex items-center gap-2" title="Mostrar pagadas">
+            <input type="checkbox" id="debts-show-paid" class="toggle toggle-sm" onchange="loadDebts()"/>
+            <span style="font-size:.78rem;color:#64748b">Ver pagadas</span>
+          </label>
+          <button class="btn btn-primary btn-sm" onclick="openDebtModal()">+ Agregar</button>
+        </div>
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-        <div class="stat-card" style="border-left:4px solid #ef4444"><p class="label">Deuda total</p><p class="value text-error" id="d-tot">$0</p></div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <div class="stat-card" style="border-left:4px solid #ef4444"><p class="label">Yo debo</p><p class="value text-error" id="d-tot">$0</p></div>
+        <div class="stat-card" style="border-left:4px solid #22c55e"><p class="label">Me deben</p><p class="value" style="color:#22c55e" id="d-owed">$0</p></div>
         <div class="stat-card" style="border-left:4px solid #f97316"><p class="label">Cuota mensual</p><p class="value" id="d-mon">$0</p></div>
-        <div class="stat-card" style="border-left:4px solid #22c55e"><p class="label">Activas</p><p class="value" id="d-ct">0</p></div>
+        <div class="stat-card" style="border-left:4px solid #3b82f6"><p class="label">Activas</p><p class="value" id="d-ct">0</p></div>
       </div>
       <div id="debts-list"><div class="empty-state"><div class="emoji">📉</div><p>Sin deudas</p></div></div>
     </div>
@@ -606,11 +618,11 @@ body{background:#f1f5f9;min-height:100vh}
     <!-- REPORTES -->
     <div class="page" id="page-reports">
       <div class="mb-5"><h2 style="font-size:1.5rem;font-weight:800">Reportes</h2><p style="color:#64748b;font-size:.875rem">Análisis financiero</p></div>
+      <div class="stat-card mb-4"><p style="font-weight:700;margin-bottom:1rem">Resumen mensual</p><div id="report-tbl"></div></div>
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <div class="stat-card"><p style="font-weight:700;margin-bottom:1rem">Ingresos vs Gastos</p><canvas id="chart-bar-r" height="220"></canvas></div>
         <div class="stat-card"><p style="font-weight:700;margin-bottom:1rem">Gastos por categoría</p><canvas id="chart-pie-r" height="220"></canvas></div>
       </div>
-      <div class="stat-card"><p style="font-weight:700;margin-bottom:1rem">Resumen mensual</p><div id="report-tbl"></div></div>
     </div>
     <!-- CATEGORÍAS -->
     <div class="page" id="page-categories">
@@ -634,14 +646,14 @@ body{background:#f1f5f9;min-height:100vh}
 
   <!-- BARRA NAVEGACIÓN INFERIOR MÓVIL -->
   <nav id="mob-nav">
-    <div class="mob-item active" data-page="dashboard"    onclick="go('dashboard')"><span class="mob-ico">📊</span><span>Inicio</span></div>
-    <div class="mob-item" data-page="transactions" onclick="go('transactions')"><span class="mob-ico">↕️</span><span>Movimientos</span></div>
+    <div class="mob-item active" data-page="dashboard"    onclick="go('dashboard')"><span class="mob-ico"><i data-lucide="layout-dashboard"></i></span><span>Inicio</span></div>
+    <div class="mob-item" data-page="transactions" onclick="go('transactions')"><span class="mob-ico"><i data-lucide="arrow-left-right"></i></span><span>Movimientos</span></div>
     <div class="mob-item" onclick="openTxnModal()" style="color:#2563eb">
-      <span class="mob-ico" style="background:#2563eb;color:#fff;border-radius:50%;width:2rem;height:2rem;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin:-2px auto 2px">+</span>
-      <span>Nuevo</span>
+      <span class="mob-ico" style="background:#2563eb;color:#fff;border-radius:50%;width:2.2rem;height:2.2rem;display:flex;align-items:center;justify-content:center;margin:-2px auto 2px;flex-shrink:0"><i data-lucide="plus" style="width:18px;height:18px;stroke-width:2.5"></i></span>
+      <span style="font-size:.55rem;opacity:0"> </span>
     </div>
-    <div class="mob-item" data-page="accounts" onclick="go('accounts')"><span class="mob-ico">🏦</span><span>Cuentas</span></div>
-    <div class="mob-item" data-page="cards"    onclick="go('cards')"><span class="mob-ico">💳</span><span>Tarjetas</span></div>
+    <div class="mob-item" data-page="accounts" onclick="go('accounts')"><span class="mob-ico"><i data-lucide="landmark"></i></span><span>Cuentas</span></div>
+    <div class="mob-item" data-page="cards"    onclick="go('cards')"><span class="mob-ico"><i data-lucide="credit-card"></i></span><span>Tarjetas</span></div>
   </nav>
 </div>
 
@@ -686,7 +698,7 @@ body{background:#f1f5f9;min-height:100vh}
       <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Notas</span></label><textarea id="txn-notes" class="textarea textarea-bordered" rows="2" placeholder="Opcional..."></textarea></div>
       <!-- Enlazar gasto a una deuda para reducir su saldo automáticamente -->
       <div class="form-control col-span-2" id="txn-debt-wrap" style="display:none">
-        <label class="label"><span class="label-text font-semibold">📉 Aplicar a deuda</span><span class="label-text-alt" style="color:#94a3b8">Reducirá el saldo pendiente</span></label>
+        <label class="label"><span class="label-text font-semibold"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Aplicar a deuda</span><span class="label-text-alt" style="color:#94a3b8">Reducirá el saldo pendiente</span></label>
         <select id="txn-debt-id" class="select select-bordered"><option value="">No aplicar a deuda</option></select>
       </div>
       <!-- Panel recurrente (solo en gastos) -->
@@ -694,7 +706,7 @@ body{background:#f1f5f9;min-height:100vh}
         <div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:14px;padding:1rem">
           <label class="label cursor-pointer justify-start gap-3 p-0 mb-3">
             <input id="txn-is-rec" type="checkbox" class="toggle toggle-secondary" onchange="toggleRecPanel()"/>
-            <div><p class="label-text font-semibold" style="color:#7c3aed">🔁 Es gasto recurrente</p></div>
+            <div><p class="label-text font-semibold" style="color:#7c3aed"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:4px"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>Es gasto recurrente</p></div>
           </label>
           <div id="txn-rec-panel" style="display:none" class="grid grid-cols-2 gap-2">
             <div class="form-control"><label class="label py-1"><span class="label-text text-xs font-semibold">Frecuencia</span></label><select id="txn-rec-freq" class="select select-bordered select-sm"><option value="monthly">Mensual</option><option value="weekly">Semanal</option><option value="biweekly">Quincenal</option><option value="yearly">Anual</option></select></div>
@@ -820,7 +832,7 @@ body{background:#f1f5f9;min-height:100vh}
 <!-- MODAL: Pagar tarjeta -->
 <dialog id="modal-pay" class="modal">
   <div class="modal-box">
-    <h3 class="font-bold text-lg mb-1">💳 Pagar tarjeta</h3>
+    <h3 class="font-bold text-lg mb-1"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:inline;vertical-align:middle;margin-right:6px"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Pagar tarjeta</h3>
     <p class="text-sm text-base-content/60 mb-3">Reduce la deuda de la TC y debita de tu cuenta.</p>
     <!-- Alerta de validación -->
     <div id="pay-alert" style="display:none;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:.75rem 1rem;margin-bottom:.75rem;font-size:.85rem;color:#b91c1c;font-weight:500;gap:.5rem;align-items:center">
@@ -921,23 +933,73 @@ body{background:#f1f5f9;min-height:100vh}
 
 <!-- MODAL: Deuda -->
 <dialog id="modal-debt" class="modal">
-  <div class="modal-box">
-    <h3 class="font-bold text-lg mb-4" id="debt-title">Nueva deuda</h3>
+  <div class="modal-box" style="max-width:500px">
+    <h3 class="font-bold text-lg mb-3" id="debt-title">Nueva deuda</h3>
     <input type="hidden" id="debt-edit-id"/>
+    <!-- Selector de dirección -->
+    <div class="tabs tabs-boxed mb-4" style="background:#f1f5f9">
+      <a class="tab tab-active" id="dtab-owe"   onclick="setDebtDir('owe')">Yo debo</a>
+      <a class="tab"            id="dtab-owed"  onclick="setDebtDir('owed')">Me deben</a>
+    </div>
+    <input type="hidden" id="debt-direction" value="owe"/>
     <div class="grid grid-cols-2 gap-3">
+      <!-- Campos comunes -->
       <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Nombre *</span></label><input id="debt-name" type="text" placeholder="Ej: Crédito consumo" class="input input-bordered"/></div>
-      <div class="form-control"><label class="label"><span class="label-text font-semibold">Acreedor *</span></label><input id="debt-cred" type="text" placeholder="Ej: Bancolombia" class="input input-bordered"/></div>
-      <div class="form-control"><label class="label"><span class="label-text font-semibold">Tipo</span></label><select id="debt-type" class="select select-bordered"><option value="loan">Préstamo</option><option value="credit">Crédito</option><option value="personal">Personal</option><option value="mortgage">Hipoteca</option><option value="other">Otro</option></select></div>
+      <!-- Acreedor (yo debo) / Deudor (me deben) -->
+      <div class="form-control" id="debt-cred-wrap"><label class="label"><span class="label-text font-semibold" id="debt-cred-lbl">Acreedor *</span></label><input id="debt-cred" type="text" placeholder="Ej: Bancolombia" class="input input-bordered"/></div>
+      <div class="form-control" id="debt-type-wrap"><label class="label"><span class="label-text font-semibold">Tipo</span></label><select id="debt-type" class="select select-bordered"><option value="loan">Préstamo</option><option value="credit">Crédito</option><option value="personal">Personal</option><option value="mortgage">Hipoteca</option><option value="other">Otro</option></select></div>
       <div class="form-control"><label class="label"><span class="label-text font-semibold">Monto total *</span></label><div class="money-wrap"><span class="money-prefix">$</span><input id="debt-total" type="text" inputmode="decimal" placeholder="0" class="money-input" oninput="fmtInput(this)"/></div></div>
       <div class="form-control"><label class="label"><span class="label-text font-semibold">Saldo pendiente *</span></label><div class="money-wrap"><span class="money-prefix">$</span><input id="debt-rem" type="text" inputmode="decimal" placeholder="0" class="money-input" oninput="fmtInput(this)"/></div></div>
-      <div class="form-control"><label class="label"><span class="label-text font-semibold">Interés (%)</span></label><input id="debt-rate" type="number" step="0.01" placeholder="0" class="input input-bordered"/></div>
-      <div class="form-control"><label class="label"><span class="label-text font-semibold">Cuota mensual</span></label><div class="money-wrap"><span class="money-prefix">$</span><input id="debt-mon" type="text" inputmode="decimal" placeholder="0" class="money-input" oninput="fmtInput(this)"/></div></div>
-      <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Próximo vencimiento</span></label><input id="debt-due" type="date" class="input input-bordered"/></div>
+
+      <!-- Campos solo para "yo debo" -->
+      <div id="debt-owe-fields" class="col-span-2 grid grid-cols-2 gap-3">
+        <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Cuota mensual</span></label><div class="money-wrap"><span class="money-prefix">$</span><input id="debt-monthly-payment" type="text" inputmode="decimal" placeholder="0" class="money-input" oninput="fmtInput(this)"/></div></div>
+        <div class="form-control"><label class="label"><span class="label-text font-semibold">Día de pago (1-31)</span></label><input id="debt-day" type="number" min="1" max="31" placeholder="1" class="input input-bordered"/></div>
+        <div class="form-control"><label class="label"><span class="label-text font-semibold">Cuenta de pago por defecto</span></label><div id="debt-defacc-csel" class="csel-wrap"></div><input type="hidden" id="debt-default-acc-id"/></div>
+        <div class="form-control"><label class="label"><span class="label-text font-semibold">Categoría abono</span></label><select id="debt-cat-capital" class="select select-bordered"><option value="">Sin categoría</option></select></div>
+        <div class="form-control"><label class="label"><span class="label-text font-semibold">Categoría intereses</span></label><select id="debt-cat-interest" class="select select-bordered"><option value="">Sin categoría</option></select></div>
+      </div>
+
+      <!-- Campos solo para "me deben" -->
+      <div id="debt-owed-fields" class="col-span-2 grid grid-cols-2 gap-3" style="display:none">
+        <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Cuenta para ingreso al pagar</span></label><div id="debt-acc-csel" class="csel-wrap"></div><input type="hidden" id="debt-acc-id"/></div>
+      </div>
+
       <div class="form-control col-span-2"><label class="label"><span class="label-text font-semibold">Notas</span></label><textarea id="debt-notes" class="textarea textarea-bordered" rows="2"></textarea></div>
     </div>
     <div class="modal-action">
       <button class="btn" onclick="document.getElementById('modal-debt').close()">Cancelar</button>
       <button class="btn btn-primary" onclick="saveDebt()">Guardar</button>
+    </div>
+  </div>
+  <form method="dialog" class="modal-backdrop"><button>close</button></form>
+</dialog>
+
+<!-- MODAL: Verificar y pagar recurrente -->
+<dialog id="modal-verify-pay" class="modal">
+  <div class="modal-box" style="max-width:420px">
+    <h3 class="font-bold text-lg mb-4" id="vp-title">Verificar y pagar</h3>
+    <input type="hidden" id="vp-rec-id"/>
+    <input type="hidden" id="vp-debt-id"/>
+    <div id="vp-body" class="space-y-3"></div>
+    <!-- Aporte capital: solo visible al pagar deuda -->
+    <div id="vp-capital-wrap" class="form-control mt-3" style="display:none">
+      <label class="label"><span class="label-text font-semibold">Aporte capital *</span></label>
+      <div class="money-wrap"><span class="money-prefix">$</span><input id="vp-capital" type="text" inputmode="decimal" placeholder="0" class="money-input" oninput="fmtInput(this);recalcDebtInterest()"/></div>
+      <label class="label pt-1"><span class="label-text-alt" style="color:#94a3b8">Interés = Cuota − Aporte capital</span></label>
+    </div>
+    <!-- Resumen calculado de interés (solo para deudas) -->
+    <div id="vp-interest-summary" style="display:none;margin-top:.5rem;padding:.625rem .875rem;background:#fef2f2;border:1px solid #fecaca;border-radius:10px;font-size:.85rem">
+      <div style="display:flex;justify-content:space-between"><span style="color:#64748b">Interés del período</span><span id="vp-interest-val" style="font-weight:700;color:#ef4444">$0</span></div>
+    </div>
+    <div id="vp-acc-wrap" class="form-control mt-3">
+      <label class="label"><span class="label-text font-semibold">Cuenta de origen *</span></label>
+      <div id="vp-acc-csel" class="csel-wrap"></div>
+      <input type="hidden" id="vp-acc-id"/>
+    </div>
+    <div class="modal-action">
+      <button class="btn" onclick="document.getElementById('modal-verify-pay').close()">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmVerifyPay()">Confirmar pago</button>
     </div>
   </div>
   <form method="dialog" class="modal-backdrop"><button>close</button></form>
@@ -1044,46 +1106,74 @@ const FREQ_LABEL  = { monthly:'Mensual', weekly:'Semanal', biweekly:'Quincenal',
 // ════════════════════════════════════════════
 // INICIALIZACIÓN
 // ════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', async () => {
-  // Fechas por defecto en los campos date/month
-  const hoy = new Date().toISOString().split('T')[0];
-  const mes  = hoy.slice(0,7);
-  ['txn-date','txn-tr-date','tr-date','pay-date','rec-next'].forEach(id => setV(id, hoy));
-  ['f-month','bud-month'].forEach(id => setV(id, mes));
 
-  // Fecha en el header del dashboard
-  const de = document.getElementById('dash-date');
-  if (de) de.textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
-
-  // Intentar conectar Supabase si hay credenciales guardadas
-  if (SUPABASE_URL && SUPABASE_KEY) {
-    try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); isDemo = false; }
-    catch(e) { console.warn('Supabase no disponible, modo demo:', e); }
+// Oculta el loader y muestra la app — se llama desde DOMContentLoaded y también como fallback
+function showApp() {
+  const shell  = document.getElementById('app-shell');
+  const loader = document.getElementById('app-loader');
+  if (loader) {
+    loader.style.display   = 'none';
+    loader.style.opacity   = '0';
+    loader.style.visibility = 'hidden';
+    loader.style.pointerEvents = 'none';
+    loader.setAttribute('aria-hidden', 'true');
   }
+  if (shell) {
+    shell.style.display    = 'block';
+    shell.style.visibility = 'visible';
+  }
+}
 
-  // Cargar datos de demostración en memoria
-  loadDemoData();
+// Fallback: si en 4 segundos no se ha mostrado la app, la mostramos igual
+setTimeout(showApp, 4000);
 
-  // Mostrar banner si no hay Supabase configurado
-  if (!SUPABASE_URL) document.getElementById('config-banner').style.display = 'block';
-  // Pre-rellenar el modal de configuración con las credenciales guardadas
-  if (SUPABASE_URL) setV('cfg-url', SUPABASE_URL);
-  if (SUPABASE_KEY) setV('cfg-key', SUPABASE_KEY);
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Fechas por defecto en los campos date/month
+    const hoy = new Date().toISOString().split('T')[0];
+    const mes  = hoy.slice(0,7);
+    ['txn-date','txn-tr-date','tr-date','pay-date','rec-next'].forEach(id => setV(id, hoy));
+    ['f-month','bud-month'].forEach(id => setV(id, mes));
 
-  // Inicializar widgets del dashboard
-  initWidgets();
+    // Fecha en el header del dashboard
+    const de = document.getElementById('dash-date');
+    if (de) de.textContent = new Date().toLocaleDateString('es-ES',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 
-  // Ejecutar auto-cobros pendientes al arrancar (silencioso)
-  setTimeout(() => processAutoCharges({ silent: true }), 800);
+    // Intentar conectar Supabase si hay credenciales guardadas
+    if (SUPABASE_URL && SUPABASE_KEY) {
+      try { sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY); isDemo = false; }
+      catch(e) { console.warn('Supabase no disponible, modo demo:', e); }
+    }
 
-  // Sincronizar control de modo oscuro en sidebar
-  const savedDark = localStorage.getItem('fin_dark') || 'system';
-  applyDarkMode(savedDark);
+    // Cargar datos de demostración en memoria
+    loadDemoData();
 
-  // Mostrar la app directamente (sin pantalla de login)
-  document.getElementById('app-shell').style.display = 'block';
-  document.getElementById('app-loader').style.display = 'none';
-  go('dashboard');
+    // Mostrar banner si no hay Supabase configurado
+    if (!SUPABASE_URL) document.getElementById('config-banner').style.display = 'block';
+    // Pre-rellenar el modal de configuración con las credenciales guardadas
+    if (SUPABASE_URL) setV('cfg-url', SUPABASE_URL);
+    if (SUPABASE_KEY) setV('cfg-key', SUPABASE_KEY);
+
+    // Inicializar widgets del dashboard
+    try { initWidgets(); } catch(e) { console.warn('initWidgets error:', e); }
+
+    // Ejecutar auto-cobros pendientes al arrancar (silencioso)
+    setTimeout(() => { try { processAutoCharges({ silent: true }); } catch(e){} }, 800);
+
+    // Inicializar iconos Lucide (con guard por si la librería no cargó)
+    try { if(window.lucide) lucide.createIcons(); } catch(e) { console.warn('Lucide error:', e); }
+
+    // Sincronizar control de modo oscuro en sidebar
+    const savedDark = localStorage.getItem('fin_dark') || 'system';
+    try { applyDarkMode(savedDark); } catch(e) {}
+
+  } catch(e) {
+    console.error('Error al inicializar FinanzApp:', e);
+  } finally {
+    // Siempre ocultar el loader y mostrar la app, sin importar errores
+    showApp();
+    try { go('dashboard'); } catch(e) { console.warn('go(dashboard) error:', e); }
+  }
 });
 
 // ════════════════════════════════════════════
@@ -1760,7 +1850,7 @@ async function loadDash() {
   const cats = await dbGet('categories');
   renderWContent('charts',       () => renderCharts(txns, mt, cats));
   renderWContent('balances',     () => renderBalWidget(accs, cards));
-  renderWContent('recurring',    () => renderRecPending(recs));
+  renderWContent('recurring',    () => renderRecPending(recs, debts));
   renderWContent('transactions', () => renderRecentTxns(txns, cats, accs));
 }
 
@@ -1827,42 +1917,66 @@ function renderRecentTxns(txns, cats, accs) {
 }
 
 // ── Widget de gastos recurrentes pendientes ──
-function renderRecPending(recs) {
+function renderRecPending(recs, debts=[]) {
   const el = document.getElementById('dash-rec-pend');
   if (!el) return;
-  // Fecha de hoy en local (sin conversión UTC)
-  const now   = new Date();
+  const now    = new Date();
   const todayY = now.getFullYear();
   const todayM = now.getMonth();
   const todayD = now.getDate();
   const today  = new Date(todayY, todayM, todayD);
   const lim    = new Date(todayY, todayM, todayD + 15);
 
+  // Recurrentes: vencidos (next_date < hoy) + próximos 15 días
   const pending = recs
     .filter(r => r.active !== false && r.next_date)
     .filter(r => {
       const [y,m,d] = r.next_date.split('-').map(Number);
-      const rd = new Date(y, m-1, d);
-      return rd >= today && rd <= lim;
+      return new Date(y, m-1, d) <= lim; // incluye vencidos y próximos
     })
     .sort((a,b) => a.next_date > b.next_date ? 1 : -1);
 
-  if (!pending.length) {
-    el.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="emoji" style="font-size:2rem">✅</div><p>Sin cobros próximos en 15 días</p></div>';
+  // Deudas activas con día de pago configurado (excluir si ya se pagó este mes)
+  const thisMth = `${todayY}-${String(todayM+1).padStart(2,'0')}`;
+  const debtItems = debts
+    .filter(d => d.direction !== 'owed' && d.status === 'active' && d.payment_day)
+    .filter(d => d.last_paid_month !== thisMth)   // ya pagado este mes → no mostrar
+    .map(d => {
+      let pd = new Date(todayY, todayM, d.payment_day);
+      if (pd < today) pd = new Date(todayY, todayM + 1, d.payment_day);
+      return { _isDebt:true, _debt:d, id:d.id, name:d.name,
+        amount: d.monthly_payment || 0, icon:'📋', auto_charge:false,
+        next_date: `${pd.getFullYear()}-${String(pd.getMonth()+1).padStart(2,'0')}-${String(d.payment_day).padStart(2,'0')}` };
+    });
+
+  const all = [...pending, ...debtItems].sort((a,b) => a.next_date > b.next_date ? 1 : -1);
+
+  if (!all.length) {
+    el.innerHTML='<div class="empty-state" style="padding:1.5rem"><div class="emoji" style="font-size:2rem">✅</div><p>Sin cobros pendientes</p></div>';
     return;
   }
-  el.innerHTML = pending.map(r => {
+  el.innerHTML = all.map(r => {
     const [y,m,d] = r.next_date.split('-').map(Number);
-    const rd = new Date(y, m-1, d);
-    // Diferencia de días calendarios (sin riesgo de DST)
-    const dl = Math.round((rd - today) / 864e5);
-    const lbl = dl <= 0 ? '¡Hoy!' : dl === 1 ? 'Mañana' : `En ${dl} días`;
+    const rd  = new Date(y, m-1, d);
+    const dl  = Math.round((rd - today) / 864e5);
+    const overdue = dl < 0;
+    const lbl = overdue ? `${Math.abs(dl)}d vencido` : dl === 0 ? '¡Hoy!' : dl === 1 ? 'Mañana' : `En ${dl} días`;
     const urgent = dl <= 1;
-    return `<div class="pending-row"><span style="font-size:1.3rem">${r.icon||'🔁'}</span>
-      <div class="flex-1 min-w-0"><p style="font-weight:600;font-size:.875rem">${r.name}</p><p style="font-size:.75rem;color:#94a3b8">${fmtDate(r.next_date)} ${r.auto_charge?'<span class="tr-badge">🔄 Auto</span>':''}</p></div>
-      <div style="text-align:right;flex-shrink:0"><p style="font-weight:700;color:#ef4444">${fmt(r.amount)}</p>
-        <span style="display:inline-flex;padding:.2rem .6rem;border-radius:99px;font-size:.72rem;font-weight:600;background:${urgent?'#fee2e2':'#f0fdf4'};color:${urgent?'#ef4444':'#16a34a'}">${lbl}</span></div>
-      ${!r.auto_charge?`<button class="btn btn-xs btn-success ml-1" onclick="markRecPaid('${r.id}')">✓</button>`:''}
+    const isDebt = !!r._isDebt;
+    const badgeStyle = overdue
+      ? 'background:#fef3c7;color:#b45309'
+      : urgent ? 'background:#fee2e2;color:#ef4444' : 'background:#f0fdf4;color:#16a34a';
+    return `<div class="pending-row">
+      <span style="font-size:1.3rem">${r.icon||'🔁'}</span>
+      <div class="flex-1 min-w-0">
+        <p style="font-weight:600;font-size:.875rem">${r.name}${isDebt?' <span style="font-size:.6rem;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:99px;font-weight:700">DEUDA</span>':''}</p>
+        <p style="font-size:.75rem;color:#94a3b8">${fmtDate(r.next_date)} ${r.auto_charge?'<span class="tr-badge">🔄 Auto</span>':''}</p>
+      </div>
+      <div style="text-align:right;flex-shrink:0;margin-right:.35rem">
+        <p style="font-weight:700;color:#ef4444">${fmt(r.amount)}</p>
+        <span style="display:inline-flex;padding:.2rem .5rem;border-radius:99px;font-size:.68rem;font-weight:600;${badgeStyle}">${lbl}</span>
+      </div>
+      ${!r.auto_charge ? `<button class="btn btn-xs btn-primary" onclick="openVerifyPay('${r.id}',${isDebt})" title="Verificar y pagar">✓</button>` : ''}
     </div>`;
   }).join('');
 }
@@ -1980,8 +2094,8 @@ async function loadTxns() {
           <div style="text-align:right;flex-shrink:0">
             <p style="font-weight:700;color:${color}">${isTr?'→':isInc?'+':'-'}${fmt(t.amount)}</p>
             <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:2px">
-              ${!isTr?`<button class="btn btn-ghost btn-xs" onclick="openTxnModal('${t.id}')">✏️</button>`:''}
-              <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('transactions','${t.id}','la transacción')">🗑️</button>
+              <button class="btn btn-ghost btn-xs" onclick="openTxnModal('${t.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('transactions','${t.id}','la transacción')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
             </div>
           </div>
         </div>`;
@@ -1995,41 +2109,50 @@ function clearF(){setV('f-type','');setV('f-cat','');const now=new Date();setV('
 async function openTxnModal(id=null) {
   setV('txn-edit-id',id||'');
   document.getElementById('txn-title').textContent=id?'Editar transacción':'Nueva transacción';
-  // Limpiar alerta de validación de aperturas anteriores
   document.getElementById('txn-validation-alert')?.classList.remove('show');
   setV('txn-date',new Date().toISOString().split('T')[0]);
   setV('txn-desc','');setMoney('txn-amount',0);setV('txn-notes','');
-  // Resetear panel recurrente
   document.getElementById('txn-is-rec').checked=false;
   resetCsel('txn-src-csel','txn-src','— Selecciona cuenta o tarjeta —');
   document.getElementById('txn-rec-panel').style.display='none';
   setV('txn-rec-freq','monthly');setV('txn-rec-icon','🔁');
   setV('txn-rec-next',new Date().toISOString().split('T')[0]);
-  // Selector de deuda
-  const debts=await dbGet('debts');
+  setV('txn-tr-date',new Date().toISOString().split('T')[0]);
+
+  // Mostrar el modal INMEDIATAMENTE para que no se perciba el delay
+  document.getElementById('modal-txn').showModal();
+
+  // Luego cargar datos en paralelo
+  const [debts, , trOpts] = await Promise.all([
+    dbGet('debts'),
+    setTxnType('expense'),           // carga cats+cuentas del tipo por defecto
+    buildSrcOptions('accounts', true) // para transferencias
+  ]);
+
   const ds=document.getElementById('txn-debt-id');
   ds.innerHTML='<option value="">No aplicar a deuda</option>';
-  debts.filter(d=>d.status==='active').forEach(d=>ds.add(new Option(`📉 ${d.name} (${fmt(d.remaining_amount)} pendiente)`,d.id)));
-  // Selectores de transferencia con íconos SVG (solo cuentas activas, IDs sin prefijo)
-  const trOpts = await buildSrcOptions('accounts', true);
+  debts.filter(d=>d.status==='active'&&d.direction!=='owed').forEach(d=>ds.add(new Option(`${d.name} (${fmt(d.remaining_amount)} pendiente)`,d.id)));
+
   renderCsel('txn-tr-from-csel','txn-tr-from', trOpts, '— Cuenta origen —');
   renderCsel('txn-tr-to-csel',  'txn-tr-to',   trOpts, '— Cuenta destino —');
-  setV('txn-tr-date',new Date().toISOString().split('T')[0]);
-  // setTxnType carga categorías y fuentes filtradas
-  await setTxnType('expense');
-  // Si es edición, restaurar valores DESPUÉS de que setTxnType llenó los selects
+
   if(id){
     const all=await dbGet('transactions'),t=all.find(x=>x.id===id);
     if(t){
       await setTxnType(t.type);
       setV('txn-desc',t.description);setMoney('txn-amount',t.amount);setV('txn-date',t.date);setV('txn-notes',t.notes||'');
-      document.getElementById('txn-cat').value=t.category_id||'';
-      const srcVal = t.credit_card_id ? `card:${t.credit_card_id}` : t.account_id ? `acc:${t.account_id}` : '';
-      if (srcVal) restoreCsel('txn-src-csel', 'txn-src', srcVal);
-      if(t.debt_id)ds.value=t.debt_id;
+      if(t.type==='transfer'){
+        if(t.account_id)     restoreCsel('txn-tr-from-csel','txn-tr-from',t.account_id);
+        if(t.transfer_to_id) restoreCsel('txn-tr-to-csel','txn-tr-to',t.transfer_to_id);
+        setV('txn-tr-date',t.date); setV('txn-tr-desc',t.description); setMoney('txn-tr-amt',t.amount);
+      } else {
+        document.getElementById('txn-cat').value=t.category_id||'';
+        const srcVal=t.credit_card_id?`card:${t.credit_card_id}`:t.account_id?`acc:${t.account_id}`:'';
+        if(srcVal) restoreCsel('txn-src-csel','txn-src',srcVal);
+        if(t.debt_id) ds.value=t.debt_id;
+      }
     }
   }
-  document.getElementById('modal-txn').showModal();
 }
 
 // Cambia el tipo de transacción: filtra categorías y fuentes según el tipo
@@ -2176,8 +2299,33 @@ async function saveTxn() {
       };
 
       if (eid) {
+        // 1. Revertir el efecto de la transacción original en saldos
+        await reverseTransaction(eid);
+        // 2. Actualizar el registro
         const { error } = await dbUpd('transactions', eid, txnRec);
-        toast(error ? 'Error al actualizar' : 'Actualizado ✓', error ? 'error' : 'success');
+        if (error) { toast('Error al actualizar', 'error'); }
+        else {
+          // 3. Aplicar el nuevo efecto en saldos
+          if (accId) {
+            const allAccs = await dbGet('accounts');
+            const acc = allAccs.find(a => a.id === accId);
+            if (acc) await dbUpd('accounts', accId, { balance: (acc.balance||0) + (curTxnType==='income' ? amt : -amt) });
+          }
+          if (cardId && curTxnType === 'expense') {
+            const allCards = await dbGet('credit_cards');
+            const card = allCards.find(c => c.id === cardId);
+            if (card) await dbUpd('credit_cards', cardId, { current_balance: (card.current_balance||0) + amt });
+          }
+          if (debtId) {
+            const allDebts = await dbGet('debts');
+            const debt = allDebts.find(d => d.id === debtId);
+            if (debt) {
+              const newRem = Math.max(0, (debt.remaining_amount||0) - amt);
+              await dbUpd('debts', debtId, { remaining_amount: newRem, status: newRem <= 0 ? 'paid' : 'active' });
+            }
+          }
+          toast('Actualizado ✓', 'success');
+        }
       } else {
         const { error } = await dbIns('transactions', txnRec);
         if (error) {
@@ -2222,12 +2370,21 @@ async function saveTxn() {
   else if (cur === 'dashboard') loadDash();
 }
 
-// Ejecuta transferencia desde el modal de transacción
+// Ejecuta transferencia desde el modal de transacción (nueva o edición)
 async function doTransferFromModal(){
   const amt=getMoney('txn-tr-amt'),from=getV('txn-tr-from'),to=getV('txn-tr-to'),date=getV('txn-tr-date'),desc=getV('txn-tr-desc')||'Transferencia';
   if(!amt||!from||!to||!date){toast('Completa los campos de transferencia','error');return;}
   if(from===to){toast('Las cuentas deben ser distintas','error');return;}
-  await doTransfer(amt,from,to,date,desc);
+  const eid=getV('txn-edit-id');
+  if(eid){
+    // Revertir transferencia original, luego actualizar registro y aplicar nueva
+    await reverseTransaction(eid);
+    await dbUpd('transactions',eid,{type:'transfer',description:desc,amount:amt,date,account_id:from,transfer_to_id:to});
+    await doTransferBalances(amt,from,to);
+    toast('Transferencia actualizada ✓','success');
+  } else {
+    await doTransfer(amt,from,to,date,desc);
+  }
 }
 
 // ════════════════════════════════════════════
@@ -2249,13 +2406,18 @@ async function saveTransfer(){
   document.getElementById('modal-transfer').close();loadAccs();
 }
 
-// Lógica central de transferencia: registra y ajusta saldos
-async function doTransfer(amt,fromId,toId,date,desc){
-  await dbIns('transactions',{type:'transfer',description:desc,amount:amt,date,account_id:fromId,transfer_to_id:toId});
+// Solo ajusta saldos (sin insertar transacción)
+async function doTransferBalances(amt,fromId,toId){
   const accs=await dbGet('accounts');
   const from=accs.find(a=>a.id===fromId),to=accs.find(a=>a.id===toId);
   if(from)await dbUpd('accounts',fromId,{balance:(from.balance||0)-amt});
-  if(to)await dbUpd('accounts',toId,{balance:(to.balance||0)+amt});
+  if(to)  await dbUpd('accounts',toId,  {balance:(to.balance  ||0)+amt});
+}
+
+// Lógica central de transferencia: registra y ajusta saldos
+async function doTransfer(amt,fromId,toId,date,desc){
+  await dbIns('transactions',{type:'transfer',description:desc,amount:amt,date,account_id:fromId,transfer_to_id:toId});
+  await doTransferBalances(amt,fromId,toId);
   toast(`Transferido ${fmt(amt)} ✓`,'success');
 }
 
@@ -2279,10 +2441,10 @@ async function loadAccs(){
         <div style="width:44px;height:44px;border-radius:12px;background:${a.color}22;display:flex;align-items:center;justify-content:center;color:${a.color}">${accIconSVG(a.icon, 26)}</div>
         <div style="display:flex;gap:4px">
           ${isArchived
-            ? `<button class="btn btn-ghost btn-xs" onclick="unarchive('accounts','${a.id}')" title="Reactivar">♻️</button>
-               <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('accounts','${a.id}','la cuenta')">🗑️</button>`
-            : `<button class="btn btn-ghost btn-xs" onclick="openAccModal('${a.id}')">✏️</button>
-               <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('accounts','${a.id}','la cuenta')">🗑️</button>`}
+            ? `<button class="btn btn-ghost btn-xs" onclick="unarchive('accounts','${a.id}')" title="Reactivar"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+               <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('accounts','${a.id}','la cuenta')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`
+            : `<button class="btn btn-ghost btn-xs" onclick="openAccModal('${a.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+               <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('accounts','${a.id}','la cuenta')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>`}
         </div>
       </div>
       <p style="font-weight:700;font-size:1rem">${a.name}</p>
@@ -2378,8 +2540,8 @@ async function loadCards(){
           ${isArchived
             ? `<button class="btn btn-ghost btn-sm flex-1" onclick="unarchive('credit_cards','${c.id}')">♻️ Reactivar</button>`
             : `<button class="btn btn-primary btn-sm flex-1" onclick="openPayModal('${c.id}')" ${(c.current_balance||0)<=0?'disabled title="Sin deuda pendiente"':''}>💳 Pagar</button>`}
-          <button class="btn btn-ghost btn-sm" onclick="openCardModal('${c.id}')">✏️</button>
-          <button class="btn btn-ghost btn-sm text-error" onclick="confirmDel('credit_cards','${c.id}','la tarjeta')">🗑️</button>
+          <button class="btn btn-ghost btn-sm" onclick="openCardModal('${c.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn btn-ghost btn-sm text-error" onclick="confirmDel('credit_cards','${c.id}','la tarjeta')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>
     </div>`;
@@ -2502,37 +2664,86 @@ async function saveQCat(){
 // GASTOS RECURRENTES
 // ════════════════════════════════════════════
 async function loadRec(){
-  const [recs,cats,accs,cards]=await Promise.all([dbGet('recurring_expenses'),dbGet('categories'),dbGet('accounts'),dbGet('credit_cards')]);
+  const [recs,cats,accs,cards,debts]=await Promise.all([
+    dbGet('recurring_expenses'),dbGet('categories'),dbGet('accounts'),dbGet('credit_cards'),dbGet('debts')
+  ]);
   const active=recs.filter(r=>r.active!==false);
+
+  // Crear entradas virtuales para deudas "yo debo" con día de pago configurado
+  const now2=new Date();
+  const thisMonth = `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}`;
+  const debtRecs = debts
+    .filter(d=>d.direction!=='owed' && d.status==='active' && d.payment_day)
+    .filter(d=>d.last_paid_month !== thisMonth)   // ya pagado este mes → no mostrar
+    .map(d=>{
+      // Calcular próxima fecha de pago
+      let pd = new Date(now2.getFullYear(), now2.getMonth(), d.payment_day);
+      if(pd < now2) pd = new Date(now2.getFullYear(), now2.getMonth()+1, d.payment_day);
+      return {
+        _isDebt:true, id:d.id, name:d.name,
+        amount: d.monthly_payment || 0,   // cuota mensual configurada
+        remaining: d.remaining_amount,
+        category_id:d.capital_category_id, account_id:null, card_id:null,
+        icon:'📋', frequency:'monthly', auto_charge:false, active:true,
+        next_date:pd.toISOString().split('T')[0], _debt:d
+      };
+    });
+
+  const allRecs = [...active, ...debtRecs];
   const mon=active.reduce((s,r)=>s+(r.amount*(FREQ_FACTOR[r.frequency]||1)),0);
   document.getElementById('rec-mon').textContent=fmt(mon);
   document.getElementById('rec-yr').textContent=fmt(mon*12);
   document.getElementById('rec-ct').textContent=active.length;
-  // Próximos vencimientos — comparación timezone-safe (sin UTC)
-  const now2  = new Date();
+
   const today = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate());
   const lim   = new Date(now2.getFullYear(), now2.getMonth(), now2.getDate() + 15);
   const parseDateLocal = s => { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
-  // Diferencia de días usando solo componentes de fecha (evita problemas de DST)
   const daysDiff = (a, b) => Math.round((a - b) / 864e5);
-  const up=active.filter(r=>r.next_date).filter(r=>{ const d=parseDateLocal(r.next_date); return d>=today&&d<=lim; }).sort((a,b)=>a.next_date>b.next_date?1:-1);
+  const up=allRecs.filter(r=>r.next_date).filter(r=>{ const d=parseDateLocal(r.next_date); return d>=today&&d<=lim; }).sort((a,b)=>a.next_date>b.next_date?1:-1);
   const upBox=document.getElementById('rec-up-box');
   if(up.length){
     upBox.style.display='block';
     document.getElementById('rec-up-list').innerHTML=up.map(r=>{
       const dl=daysDiff(parseDateLocal(r.next_date), today);
       const lbl=dl<=0?'¡Hoy!':dl===1?'Mañana':`En ${dl} días`;
+      const isDebt = r._isDebt;
       return `<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem 0;border-bottom:1px solid #f1f5f9">
         <span style="font-size:1.2rem">${r.icon||'🔁'}</span>
-        <div style="flex:1"><b>${r.name}</b> — ${fmt(r.amount)} ${r.auto_charge?'<span class="tr-badge">🔄 Auto</span>':''}</div>
+        <div style="flex:1"><b>${r.name}</b>${isDebt?' <span style="font-size:.65rem;background:#fee2e2;color:#dc2626;padding:1px 5px;border-radius:99px">DEUDA</span>':''} — ${fmt(isDebt?r.remaining:r.amount)} ${r.auto_charge?'<span class="tr-badge">Auto</span>':''}</div>
         <span style="color:#92400e;font-weight:600;font-size:.8rem">${lbl}</span>
-        ${!r.auto_charge?`<button class="btn btn-xs btn-success" onclick="markRecPaid('${r.id}')">✓</button>`:'<span style="font-size:.72rem;color:#7c3aed;font-weight:600">Auto</span>'}
+        ${!r.auto_charge?`<button class="btn btn-xs btn-primary" onclick="openVerifyPay('${r.id}',${isDebt})">Verificar y pagar</button>`:''}
+        ${!isDebt&&!r.auto_charge?`<button class="btn btn-xs btn-success ml-1" onclick="markRecPaid('${r.id}')">✓</button>`:''}
       </div>`;
     }).join('');
   } else upBox.style.display='none';
   const el=document.getElementById('rec-list');
-  if(!recs.length){el.innerHTML='<div class="empty-state"><div class="emoji">🔁</div><p>Sin gastos recurrentes</p></div>';return;}
-  el.innerHTML=recs.map(r=>{
+  if(!recs.length && !debtRecs.length){el.innerHTML='<div class="empty-state"><div class="emoji">🔁</div><p>Sin gastos recurrentes</p></div>';return;}
+  // Render debt entries first as cards in the list
+  const debtHtml = debtRecs.map(dr => {
+    const d = dr._debt;
+    return `<div class="rec-card mb-3" style="border-left-color:#ef4444">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="display:flex;align-items:center;gap:.875rem">
+          <div style="width:44px;height:44px;border-radius:12px;background:#fee2e222;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">📋</div>
+          <div>
+            <p style="font-weight:700;font-size:.95rem">${dr.name} <span style="font-size:.65rem;background:#fee2e2;color:#dc2626;padding:1px 6px;border-radius:99px;font-weight:700">DEUDA</span></p>
+            <div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin-top:3px">
+              <span class="freq-badge">Mensual</span>
+              <span style="font-size:.72rem;color:#64748b">📅 Día ${d.payment_day}</span>
+              <span style="font-size:.72rem;color:#64748b">Saldo: ${fmt(d.remaining_amount)}</span>
+            </div>
+          </div>
+        </div>
+        <p style="font-weight:800;font-size:1.05rem;flex-shrink:0;color:#ef4444">${fmt(dr.amount||0)}</p>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:.875rem;justify-content:flex-end;flex-wrap:wrap">
+        <button class="btn btn-success btn-xs" onclick="openVerifyPay('${dr.id}',true)">💳 Pagar cuota</button>
+        <button class="btn btn-ghost btn-xs" onclick="openDebtModal('${dr.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML = debtHtml;
+  el.innerHTML += recs.map(r=>{
     const cat=cats.find(c=>c.id===r.category_id);
     // Resolver fuente de pago (cuenta o tarjeta) unificada
     const acc=accs.find(a=>a.id===r.account_id);
@@ -2558,27 +2769,192 @@ async function loadRec(){
         </div>
         <p style="font-weight:800;font-size:1.05rem;flex-shrink:0">${fmt(r.amount)}</p>
       </div>
-      <div style="display:flex;gap:6px;margin-top:.875rem;justify-content:flex-end">
+      <div style="display:flex;gap:6px;margin-top:.875rem;justify-content:flex-end;flex-wrap:wrap">
         ${isActive&&!r.auto_charge?`<button class="btn btn-success btn-xs" onclick="markRecPaid('${r.id}')">✓ Registrar</button>`:''}
+        ${isActive&&!r.auto_charge?`<button class="btn btn-primary btn-xs" onclick="openVerifyPay('${r.id}',false)">Verificar y pagar</button>`:''}
         <button class="btn btn-ghost btn-xs" onclick="toggleRec('${r.id}',${!isActive})">${isActive?'⏸':'▶'}</button>
-        <button class="btn btn-ghost btn-xs" onclick="openRecModal('${r.id}')">✏️</button>
-        <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('recurring_expenses','${r.id}','el recurrente')">🗑️</button>
+        <button class="btn btn-ghost btn-xs" onclick="openRecModal('${r.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+        <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('recurring_expenses','${r.id}','el recurrente')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
       </div>
     </div>`;
   }).join('');
 }
 
 // Marca un gasto recurrente como pagado y calcula la próxima fecha
-async function markRecPaid(id){
+async function markRecPaid(id, overrideAccId=null, overrideAmount=null){
   const recs=await dbGet('recurring_expenses'),r=recs.find(x=>x.id===id);if(!r)return;
-  await dbIns('transactions',{type:'expense',description:r.name,amount:r.amount,date:new Date().toISOString().split('T')[0],category_id:r.category_id||null,account_id:r.account_id||null,credit_card_id:r.card_id||null});
+  const accId  = overrideAccId  || r.account_id || null;
+  const amount = overrideAmount || r.amount;
+  // Fecha de la transacción = next_date configurada (no la fecha de hoy)
+  const txnDate = r.next_date || new Date().toISOString().split('T')[0];
+  await dbIns('transactions',{type:'expense',description:r.name,amount,date:txnDate,category_id:r.category_id||null,account_id:accId,credit_card_id:r.card_id||null});
+  // Actualizar saldo de cuenta si tiene
+  if(accId){
+    const accs=await dbGet('accounts'),acc=accs.find(a=>a.id===accId);
+    if(acc) await dbUpd('accounts',accId,{balance:(acc.balance||0)-amount});
+  }
   const next=nextDate(r.next_date||new Date().toISOString().split('T')[0],r.frequency);
   await dbUpd('recurring_expenses',id,{next_date:next});
   toast(`"${r.name}" registrado ✓`,'success');
   if(document.getElementById('page-recurring').classList.contains('active'))loadRec();else loadDash();
 }
 
-// Calcula la próxima fecha de cobro a partir de una fecha base y frecuencia
+// Abre el modal "Verificar y pagar" para un recurrente o deuda
+async function openVerifyPay(id, isDebt) {
+  setV('vp-rec-id',  isDebt ? '' : id);
+  setV('vp-debt-id', isDebt ? id  : '');
+
+  const body         = document.getElementById('vp-body');
+  const capitalWrap  = document.getElementById('vp-capital-wrap');
+  const interestSumm = document.getElementById('vp-interest-summary');
+
+  if(isDebt){
+    const debts = await dbGet('debts');
+    const d = debts.find(x=>x.id===id);
+    if(!d) return;
+    const cuota = d.monthly_payment || 0;
+    document.getElementById('vp-title').textContent = `Pago: ${d.name}`;
+    body.innerHTML = `
+      <div class="stat-card" style="padding:.75rem 1rem">
+        <div style="display:flex;justify-content:space-between;margin-bottom:.5rem">
+          <span style="color:#64748b;font-size:.85rem">Saldo pendiente</span>
+          <span style="font-weight:700">${fmt(d.remaining_amount)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:.5rem;border-top:1px solid #e2e8f0">
+          <span style="color:#3b82f6;font-size:.85rem;font-weight:600">Cuota este mes</span>
+          <div class="money-wrap" style="max-width:160px">
+            <span class="money-prefix">$</span>
+            <input id="vp-cuota-mes" type="text" inputmode="decimal" placeholder="0"
+              class="money-input" oninput="fmtInput(this);recalcDebtInterest()"
+              style="text-align:right"/>
+          </div>
+        </div>
+        <p style="font-size:.72rem;color:#94a3b8;margin-top:4px">Cuota configurada: ${fmt(cuota)} · modifica solo si cambia este mes</p>
+      </div>`;
+    // Ocultar capital por ahora; se mostrará tras showModal
+    capitalWrap.style.display = 'none';
+    interestSumm.style.display = 'none';
+
+    // Cuenta de origen
+    const accOpts = await buildSrcOptions('accounts', true);
+    renderCsel('vp-acc-csel','vp-acc-id', accOpts, '— Selecciona cuenta —');
+    const defaultAcc = d.default_account_id || null;
+
+    const modal = document.getElementById('modal-verify-pay');
+    modal.showModal();
+    requestAnimationFrame(() => {
+      setMoney('vp-cuota-mes', cuota);   // prellenar cuota editable
+      capitalWrap.style.display = 'block';
+      interestSumm.style.display = 'block';
+      setMoney('vp-capital', cuota);     // aporte capital = cuota por defecto
+      recalcDebtInterest();
+      if(defaultAcc) restoreCsel('vp-acc-csel','vp-acc-id', defaultAcc);
+    });
+    return; // ya llamamos showModal
+
+  } else {
+    const recs = await dbGet('recurring_expenses');
+    const r = recs.find(x=>x.id===id);
+    if(!r) return;
+    document.getElementById('vp-title').textContent = `Verificar: ${r.name}`;
+    body.innerHTML = `
+      <div class="stat-card" style="padding:.75rem 1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="color:#64748b;font-size:.85rem">Monto configurado</span>
+          <span style="font-weight:700;font-size:1rem;color:#3b82f6">${fmt(r.amount)}</span>
+        </div>
+      </div>`;
+    // Mostrar campo monto editable para recurrente
+    capitalWrap.style.display = 'none';
+    interestSumm.style.display = 'none';
+
+    // Cuenta: pre-seleccionar la cuenta asociada al recurrente si existe
+    const accOpts = await buildSrcOptions('accounts', true);
+    renderCsel('vp-acc-csel','vp-acc-id', accOpts, '— Selecciona cuenta —');
+
+    const modal2 = document.getElementById('modal-verify-pay');
+    modal2.showModal();
+    requestAnimationFrame(() => {
+      // Mostrar campo monto editable
+      capitalWrap.style.display = 'block';
+      // Reusar el campo vp-capital como "monto a pagar" editable
+      document.querySelector('#vp-capital-wrap label .label-text').textContent = 'Monto a pagar *';
+      document.querySelector('#vp-capital-wrap .label-text-alt').textContent = 'Puedes modificar el monto real cobrado';
+      interestSumm.style.display = 'none';
+      setMoney('vp-capital', r.amount);
+      if(r.account_id) restoreCsel('vp-acc-csel','vp-acc-id', r.account_id);
+    });
+    return;
+  }
+  document.getElementById('modal-verify-pay').showModal();
+}
+
+// Recalcula en tiempo real el interés = cuota_mes - aporte capital
+function recalcDebtInterest(){
+  const cuota   = getMoney('vp-cuota-mes') || 0;
+  const capital = getMoney('vp-capital')   || 0;
+  const interes = Math.max(0, cuota - capital);
+  const el = document.getElementById('vp-interest-val');
+  if(el) el.textContent = fmt(interes);
+}
+
+// Confirma el pago desde el modal "Verificar y pagar"
+async function confirmVerifyPay(){
+  const recId  = getV('vp-rec-id');
+  const debtId = getV('vp-debt-id');
+  const accId  = getV('vp-acc-id');
+  if(!accId){ toast('Selecciona una cuenta de origen','error'); return; }
+  const today = new Date().toISOString().split('T')[0];
+
+  if(debtId){
+    // Pago de deuda: generar 2 transacciones (interés + capital)
+    const debts = await dbGet('debts');
+    const d = debts.find(x=>x.id===debtId);
+    if(!d) return;
+    const capital  = getMoney('vp-capital') || 0;
+    if(!capital){ toast('Ingresa el aporte a capital','error'); return; }
+    const cuota    = getMoney('vp-cuota-mes') || d.monthly_payment || 0;
+    const interest = Math.max(0, cuota - capital);
+    const total    = cuota || capital;
+    const accs     = await dbGet('accounts');
+    const acc      = accs.find(a=>a.id===accId);
+    if(acc && (acc.balance||0) < total){ toast('Saldo insuficiente en la cuenta','error'); return; }
+    // Fecha = día de pago configurado en la deuda (mes actual)
+    const now2 = new Date();
+    const debtTxnDate = d.payment_day
+      ? `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}-${String(d.payment_day).padStart(2,'0')}`
+      : today;
+
+    // Transacción 1: Interés (si hay)
+    if(interest > 0){
+      await dbIns('transactions',{type:'expense',description:`Interés: ${d.name}`,amount:interest,date:debtTxnDate,category_id:d.interest_category_id||null,account_id:accId});
+    }
+    // Transacción 2: Abono al capital
+    await dbIns('transactions',{type:'expense',description:`Abono capital: ${d.name}`,amount:capital,date:debtTxnDate,category_id:d.capital_category_id||null,account_id:accId,debt_id:debtId});
+
+    // Reducir saldo cuenta
+    if(acc) await dbUpd('accounts',accId,{balance:(acc.balance||0)-total});
+    // Reducir deuda solo por el capital abonado
+    const newRem = Math.max(0, d.remaining_amount - capital);
+    // Guardar mes en que se hizo el último pago para ocultar del widget hasta el mes siguiente
+    const now3 = new Date();
+    const lastPaidMonth = `${now3.getFullYear()}-${String(now3.getMonth()+1).padStart(2,'0')}`;
+    await dbUpd('debts',debtId,{remaining_amount:newRem,status:newRem<=0?'paid':'active',last_paid_month:lastPaidMonth});
+    toast(`Pago registrado: ${fmt(interest)} interés + ${fmt(capital)} capital`,'success');
+
+  } else if(recId){
+    // Pago de recurrente: usar monto editado y fecha configurada
+    const recs2 = await dbGet('recurring_expenses');
+    const r2 = recs2.find(x=>x.id===recId);
+    if(!r2) return;
+    const montoReal = getMoney('vp-capital') || r2.amount;
+    await markRecPaid(recId, accId, montoReal);
+  }
+
+  document.getElementById('modal-verify-pay').close();
+  loadRec();
+  loadDebts();
+}
 function nextDate(current, freq) {
   const d = parseLocalDate(current);
   if (freq === 'weekly')   d.setDate(d.getDate() + 7);
@@ -2701,7 +3077,7 @@ async function loadBudgets(){
       <div class="bp"><div class="bp-fill" style="width:${pct}%;background:${barC}"></div></div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.5rem">
         <p style="font-size:.75rem;color:#94a3b8">${pct.toFixed(0)}% · Resta ${fmt(Math.max(0,b.amount-spent))}</p>
-        <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openBudgetModal('${b.id}')">✏️</button><button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('budgets','${b.id}','el presupuesto')">🗑️</button></div>
+        <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openBudgetModal('${b.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('budgets','${b.id}','el presupuesto')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>
       </div>
     </div>`;
   }).join('');
@@ -2741,7 +3117,7 @@ async function loadGoals(){
     return`<div class="stat-card">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1rem">
         <div style="width:48px;height:48px;border-radius:14px;background:${g.color}22;display:flex;align-items:center;justify-content:center;font-size:1.5rem">${g.icon}</div>
-        <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openGoalModal('${g.id}')">✏️</button><button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('savings_goals','${g.id}','la meta')">🗑️</button></div>
+        <div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" onclick="openGoalModal('${g.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('savings_goals','${g.id}','la meta')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div>
       </div>
       <p style="font-weight:700;font-size:1rem">${g.name}</p>
       ${g.deadline?`<p style="font-size:.75rem;color:#94a3b8;margin-bottom:.75rem">📅 ${fmtDate(g.deadline)}</p>`:'<div style="margin-bottom:.75rem"></div>'}
@@ -2785,48 +3161,152 @@ async function saveGoal(){
 // DEUDAS
 // ════════════════════════════════════════════
 async function loadDebts(){
-  const debts=await dbGet('debts');
-  const active=debts.filter(d=>d.status==='active');
-  document.getElementById('d-tot').textContent=fmt(active.reduce((s,d)=>s+d.remaining_amount,0));
-  document.getElementById('d-mon').textContent=fmt(active.reduce((s,d)=>s+d.monthly_payment,0));
-  document.getElementById('d-ct').textContent=active.length;
-  const el=document.getElementById('debts-list');
-  if(!debts.length){el.innerHTML='<div class="empty-state"><div class="emoji">📉</div><p>Sin deudas</p></div>';return;}
-  const tl={loan:'Préstamo',credit:'Crédito',personal:'Personal',mortgage:'Hipoteca',other:'Otro'};
-  el.innerHTML=debts.map(d=>{
-    const pct=d.total_amount>0?Math.min((1-d.remaining_amount/d.total_amount)*100,100):0;
-    return`<div class="debt-card mb-3" style="border-left-color:${d.status==='paid'?'#22c55e':'#ef4444'}">
+  const debts = await dbGet('debts');
+  const showPaid = document.getElementById('debts-show-paid')?.checked;
+  const owe  = debts.filter(d => d.direction !== 'owed');
+  const owed = debts.filter(d => d.direction === 'owed');
+  const activeOwe  = owe.filter(d => d.status === 'active');
+  const activeOwed = owed.filter(d => d.status === 'active');
+  document.getElementById('d-tot').textContent  = fmt(activeOwe.reduce((s,d)=>s+d.remaining_amount,0));
+  const owedEl = document.getElementById('d-owed');
+  if(owedEl) owedEl.textContent = fmt(activeOwed.reduce((s,d)=>s+d.remaining_amount,0));
+  document.getElementById('d-mon').textContent  = fmt(activeOwe.reduce((s,d)=>s+(d.monthly_payment||0),0));
+  document.getElementById('d-ct').textContent   = activeOwe.length + activeOwed.length;
+  const visible = showPaid ? debts : debts.filter(d=>d.status==='active');
+  const el = document.getElementById('debts-list');
+  if(!visible.length){ el.innerHTML='<div class="empty-state"><div class="emoji">📉</div><p>Sin deudas</p></div>'; return; }
+  const oweVisible  = visible.filter(d=>d.direction!=='owed');
+  const owedVisible = visible.filter(d=>d.direction==='owed');
+  const tl = {loan:'Préstamo',credit:'Crédito',personal:'Personal',mortgage:'Hipoteca',other:'Otro'};
+  const renderDebt = (d) => {
+    const pct = d.total_amount>0 ? Math.min((1-d.remaining_amount/d.total_amount)*100,100) : 0;
+    const isPaid = d.status === 'paid';
+    const isOwed = d.direction === 'owed';
+    const accent = isPaid ? '#22c55e' : isOwed ? '#3b82f6' : '#ef4444';
+    const editSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const delSvg  = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
+    return `<div class="debt-card mb-3" style="border-left-color:${accent};${isPaid?'opacity:.65':''}">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem">
-        <div><p style="font-weight:700;font-size:1rem">${d.name}</p><p style="font-size:.8rem;color:#94a3b8">${d.creditor} · ${tl[d.type]||d.type}</p></div>
-        <div style="text-align:right"><p style="font-weight:800;font-size:1.1rem;color:#ef4444">${fmt(d.remaining_amount)}</p><p style="font-size:.75rem;color:#94a3b8">de ${fmt(d.total_amount)}</p></div>
+        <div>
+          <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:2px">
+            <span style="font-size:.65rem;font-weight:700;padding:1px 7px;border-radius:99px;background:${isOwed?'#dbeafe':'#fee2e2'};color:${isOwed?'#1d4ed8':'#dc2626'}">${isOwed?'ME DEBEN':'YO DEBO'}</span>
+            ${isPaid?'<span style="font-size:.65rem;font-weight:700;padding:1px 7px;border-radius:99px;background:#dcfce7;color:#16a34a">PAGADA</span>':''}
+          </div>
+          <p style="font-weight:700;font-size:1rem">${d.name}</p>
+          <p style="font-size:.8rem;color:#94a3b8">${d.creditor}${d.type&&d.direction!=='owed'?' · '+(tl[d.type]||d.type):''}</p>
+        </div>
+        <div style="text-align:right">
+          <p style="font-weight:800;font-size:1.1rem;color:${accent}">${fmt(d.remaining_amount)}</p>
+          <p style="font-size:.75rem;color:#94a3b8">de ${fmt(d.total_amount)}</p>
+        </div>
       </div>
-      <div class="bp mb-2"><div class="bp-fill" style="width:${pct}%;background:#22c55e"></div></div>
+      <div class="bp mb-2"><div class="bp-fill" style="width:${pct}%;background:${isPaid?'#22c55e':isOwed?'#3b82f6':'#22c55e'}"></div></div>
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem;font-size:.78rem;color:#64748b">
-        <span>Pagado: ${pct.toFixed(0)}%</span>${d.interest_rate?`<span>${d.interest_rate}% interés</span>`:''} ${d.monthly_payment?`<span>${fmt(d.monthly_payment)}/mes</span>`:''} ${d.due_date?`<span>📅 ${fmtDate(d.due_date)}</span>`:''}
+        <span>Pagado: ${pct.toFixed(0)}%</span>
+        ${d.monthly_payment?`<span>Cuota: ${fmt(d.monthly_payment)}</span>`:''}
+        ${d.payment_day?`<span>Día de pago: ${d.payment_day}</span>`:''}
       </div>
       <div style="display:flex;gap:4px;margin-top:.75rem;justify-content:flex-end">
-        ${d.status==='active'?`<button class="btn btn-success btn-xs" onclick="markDebtPaid('${d.id}')">✓ Pagada</button>`:'<span class="badge badge-success">Pagada</span>'}
-        <button class="btn btn-ghost btn-xs" onclick="openDebtModal('${d.id}')">✏️</button>
-        <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('debts','${d.id}','la deuda')">🗑️</button>
+        ${!isPaid?`<button class="btn btn-success btn-xs" onclick="markDebtPaid('${d.id}')">✓ Pagada</button>`:''}
+        <button class="btn btn-ghost btn-xs" onclick="openDebtModal('${d.id}')">${editSvg}</button>
+        <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('debts','${d.id}','la deuda')">${delSvg}</button>
       </div>
     </div>`;
-  }).join('');
+  };
+  let html2 = '';
+  if(oweVisible.length){
+    html2 += `<p style="font-size:.7rem;font-weight:700;color:#ef4444;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem">YO DEBO</p>`;
+    html2 += oweVisible.map(renderDebt).join('');
+  }
+  if(owedVisible.length){
+    html2 += `<p style="font-size:.7rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px;margin:${oweVisible.length?'1rem':0} 0 .6rem">ME DEBEN</p>`;
+    html2 += owedVisible.map(renderDebt).join('');
+  }
+  el.innerHTML = html2;
 }
 
-async function markDebtPaid(id){await dbUpd('debts',id,{status:'paid',remaining_amount:0});toast('¡Deuda pagada! 🎉','success');loadDebts();}
+async function markDebtPaid(id){
+  const debts=await dbGet('debts'), d=debts.find(x=>x.id===id);
+  if(!d) return;
+  if(d.direction==='owed' && d.income_account_id){
+    await dbIns('transactions',{type:'income',description:`Cobro: ${d.name}`,amount:d.remaining_amount,date:new Date().toISOString().split('T')[0],account_id:d.income_account_id,notes:'Deuda cobrada'});
+    const accs=await dbGet('accounts'),acc=accs.find(a=>a.id===d.income_account_id);
+    if(acc) await dbUpd('accounts',d.income_account_id,{balance:(acc.balance||0)+d.remaining_amount});
+    toast(`Ingreso de ${fmt(d.remaining_amount)} registrado ✓`,'success');
+  }
+  await dbUpd('debts',id,{status:'paid',remaining_amount:0});
+  toast('¡Deuda pagada! 🎉','success');
+  loadDebts();
+}
 
-function openDebtModal(id=null){
+function setDebtDir(dir){
+  ['owe','owed'].forEach(d=>{document.getElementById(`dtab-${d}`)?.classList.toggle('tab-active',d===dir);});
+  setV('debt-direction',dir);
+  const isOwe=dir==='owe';
+  document.getElementById('debt-owe-fields').style.display  = isOwe?'grid':'none';
+  document.getElementById('debt-owed-fields').style.display = isOwe?'none':'grid';
+  document.getElementById('debt-type-wrap').style.display   = isOwe?'':'none';
+  const lbl=document.getElementById('debt-cred-lbl');
+  if(lbl) lbl.textContent=isOwe?'Acreedor *':'Deudor *';
+  const ph=document.getElementById('debt-cred');
+  if(ph) ph.placeholder=isOwe?'Ej: Bancolombia':'Ej: Juan Pérez';
+}
+
+async function openDebtModal(id=null){
   setV('debt-edit-id',id||'');
   document.getElementById('debt-title').textContent=id?'Editar deuda':'Nueva deuda';
-  if(!id){['debt-name','debt-cred','debt-rate','debt-notes'].forEach(f=>setV(f,''));setMoney('debt-total',0);setMoney('debt-rem',0);setMoney('debt-mon',0);setV('debt-due','');setV('debt-type','loan');}
-  else dbGet('debts').then(ds=>{const d=ds.find(x=>x.id===id);if(!d)return;setV('debt-name',d.name);setV('debt-cred',d.creditor);setV('debt-type',d.type);setMoney('debt-total',d.total_amount);setMoney('debt-rem',d.remaining_amount);setV('debt-rate',d.interest_rate);setMoney('debt-mon',d.monthly_payment);setV('debt-due',d.due_date||'');setV('debt-notes',d.notes||'');});
+  const cats=await dbGet('categories');
+  ['debt-cat-capital','debt-cat-interest'].forEach(selId=>{
+    const sel=document.getElementById(selId);
+    if(!sel) return;
+    sel.innerHTML='<option value="">Sin categoría</option>';
+    cats.filter(c=>c.type==='expense').forEach(c=>sel.add(new Option(`${c.icon} ${c.name}`,c.id)));
+  });
+  const accOpts=await buildSrcOptions('accounts',true);
+  renderCsel('debt-acc-csel','debt-acc-id',accOpts,'— Selecciona cuenta —');
+  renderCsel('debt-defacc-csel','debt-default-acc-id',accOpts,'— Sin cuenta por defecto —');
+  if(!id){
+    ['debt-name','debt-cred','debt-notes','debt-day'].forEach(f=>setV(f,''));
+    setMoney('debt-monthly-payment',0);
+    setMoney('debt-total',0);setMoney('debt-rem',0);setV('debt-type','loan');
+    setDebtDir('owe');
+  } else {
+    const ds=await dbGet('debts'),d=ds.find(x=>x.id===id);
+    if(d){
+      setDebtDir(d.direction||'owe');
+      setV('debt-name',d.name);setV('debt-cred',d.creditor||'');setV('debt-type',d.type||'loan');
+      setMoney('debt-total',d.total_amount);setMoney('debt-rem',d.remaining_amount);
+      setV('debt-day',d.payment_day||'');
+      setMoney('debt-monthly-payment', d.monthly_payment||0);
+      setV('debt-notes',d.notes||'');
+      if(d.capital_category_id) setV('debt-cat-capital',d.capital_category_id);
+      if(d.interest_category_id) setV('debt-cat-interest',d.interest_category_id);
+      if(d.income_account_id) restoreCsel('debt-acc-csel','debt-acc-id',d.income_account_id);
+      if(d.default_account_id) restoreCsel('debt-defacc-csel','debt-default-acc-id',d.default_account_id);
+    }
+  }
   document.getElementById('modal-debt').showModal();
 }
 
 async function saveDebt(){
-  const name=getV('debt-name').trim(),cred=getV('debt-cred').trim(),total=getMoney('debt-total'),rem=getMoney('debt-rem');
-  if(!name||!cred||!total){toast('Completa los campos requeridos','error');return;}
-  const rec={name,creditor:cred,type:getV('debt-type'),total_amount:total,remaining_amount:rem,interest_rate:parseFloat(getV('debt-rate'))||0,monthly_payment:getMoney('debt-mon'),due_date:getV('debt-due')||null,notes:getV('debt-notes').trim()||null,status:'active'};
+  const name=getV('debt-name').trim(),cred=getV('debt-cred').trim();
+  const total=getMoney('debt-total'),rem=getMoney('debt-rem');
+  const dir=getV('debt-direction')||'owe';
+  if(!name||!total){toast('Completa los campos requeridos','error');return;}
+  if(dir==='owe'&&!cred){toast('Indica el acreedor','error');return;}
+  const rec={
+    name,creditor:cred,direction:dir,
+    type:dir==='owe'?(getV('debt-type')||'loan'):null,
+    total_amount:total,remaining_amount:rem,
+    interest_rate:0,
+    payment_day:dir==='owe'?(parseInt(getV('debt-day'))||null):null,
+    capital_category_id:dir==='owe'?(getV('debt-cat-capital')||null):null,
+    interest_category_id:dir==='owe'?(getV('debt-cat-interest')||null):null,
+    income_account_id:dir==='owed'?(getV('debt-acc-id')||null):null,
+    monthly_payment:dir==='owe'?(getMoney('debt-monthly-payment')||0):0,
+    default_account_id:dir==='owe'?(getV('debt-default-acc-id')||null):null,
+    notes:getV('debt-notes').trim()||null,status:'active'
+  };
   const eid=getV('debt-edit-id');
   if(eid){await dbUpd('debts',eid,rec);toast('Deuda actualizada ✓','success');}
   else{await dbIns('debts',rec);toast('Deuda registrada ✓','success');}
@@ -2839,14 +3319,39 @@ async function saveDebt(){
 async function loadReports(){
   const[txns,cats]=await Promise.all([dbGet('transactions'),dbGet('categories')]);
   const months=[],incs=[],exps=[];
-  for(let i=5;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push(d.toLocaleString('es-ES',{month:'short',year:'2-digit'}));const m=txns.filter(t=>t.date?.startsWith(k));incs.push(m.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));exps.push(m.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));}
+  for(let i=11;i>=0;i--){const d=new Date();d.setMonth(d.getMonth()-i);const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;months.push(d.toLocaleString('es-ES',{month:'short',year:'2-digit'}));const m=txns.filter(t=>t.date?.startsWith(k));incs.push(m.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));exps.push(m.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));}
   const cb=document.getElementById('chart-bar-r');
   if(cb){if(chBar)chBar.destroy();chBar=new Chart(cb,{type:'bar',data:{labels:months,datasets:[{label:'Ingresos',data:incs,backgroundColor:'#22c55e88',borderColor:'#22c55e',borderWidth:2,borderRadius:6},{label:'Gastos',data:exps,backgroundColor:'#ef444488',borderColor:'#ef4444',borderWidth:2,borderRadius:6}]},options:{responsive:true,plugins:{legend:{position:'bottom'}},scales:{y:{beginAtZero:true,ticks:{callback:v=>'$'+v.toLocaleString('es-CO')}}}}});}
   const now=new Date(),tm=`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
   const byCat={};txns.filter(t=>t.type==='expense'&&t.date?.startsWith(tm)).forEach(t=>{const c=cats.find(x=>x.id===t.category_id);const k=c?.name||'Otros',col=c?.color||'#6b7280';if(!byCat[k])byCat[k]={total:0,color:col};byCat[k].total+=t.amount;});
   const cp=document.getElementById('chart-pie-r');
   if(cp&&Object.keys(byCat).length){if(chPie)chPie.destroy();const lbs=Object.keys(byCat);chPie=new Chart(cp,{type:'pie',data:{labels:lbs,datasets:[{data:lbs.map(l=>byCat[l].total),backgroundColor:lbs.map(l=>byCat[l].color),borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'bottom'}}}});}
-  document.getElementById('report-tbl').innerHTML=`<table class="table table-zebra w-full" style="font-size:.875rem"><thead><tr><th>Mes</th><th>Ingresos</th><th>Gastos</th><th>Balance</th></tr></thead><tbody>${months.map((m,i)=>{const n=incs[i]-exps[i];return`<tr><td style="padding:.75rem;font-weight:600">${m}</td><td style="padding:.75rem;color:#22c55e;font-weight:600">${fmt(incs[i])}</td><td style="padding:.75rem;color:#ef4444;font-weight:600">${fmt(exps[i])}</td><td style="padding:.75rem;font-weight:700;color:${n>=0?'#22c55e':'#ef4444'}">${fmt(n)}</td></tr>`;}).join('')}</tbody></table>`;
+  // Tabla resumen: 12 meses + fila de balance anual
+  const totalInc = incs.reduce((s,v)=>s+v,0);
+  const totalExp = exps.reduce((s,v)=>s+v,0);
+  const totalNet = totalInc - totalExp;
+  document.getElementById('report-tbl').innerHTML=`<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.875rem">
+    <thead><tr style="border-bottom:2px solid #e2e8f0">
+      <th style="text-align:left;padding:.625rem .75rem;font-weight:700;color:#64748b;font-size:.75rem;text-transform:uppercase">Mes</th>
+      <th style="text-align:right;padding:.625rem .75rem;font-weight:700;color:#64748b;font-size:.75rem;text-transform:uppercase">Ingresos</th>
+      <th style="text-align:right;padding:.625rem .75rem;font-weight:700;color:#64748b;font-size:.75rem;text-transform:uppercase">Gastos</th>
+      <th style="text-align:right;padding:.625rem .75rem;font-weight:700;color:#64748b;font-size:.75rem;text-transform:uppercase">Balance</th>
+    </tr></thead>
+    <tbody>
+      ${months.map((m,i)=>{const n=incs[i]-exps[i];return`<tr style="border-bottom:1px solid #f1f5f9">
+        <td style="padding:.625rem .75rem;font-weight:600;color:#0f172a">${m}</td>
+        <td style="padding:.625rem .75rem;text-align:right;font-weight:600;color:#0f172a">${fmt(incs[i])}</td>
+        <td style="padding:.625rem .75rem;text-align:right;font-weight:600;color:#0f172a">${fmt(exps[i])}</td>
+        <td style="padding:.625rem .75rem;text-align:right;font-weight:700;color:#0f172a">${fmt(n)}</td>
+      </tr>`;}).join('')}
+    </tbody>
+    <tfoot><tr style="border-top:2px solid #0f172a;background:#f8fafc">
+      <td style="padding:.75rem;font-weight:800;color:#0f172a">Balance anual</td>
+      <td style="padding:.75rem;text-align:right;font-weight:800;color:#0f172a">${fmt(totalInc)}</td>
+      <td style="padding:.75rem;text-align:right;font-weight:800;color:#0f172a">${fmt(totalExp)}</td>
+      <td style="padding:.75rem;text-align:right;font-weight:800;font-size:1rem;color:${totalNet>=0?'#16a34a':'#dc2626'}">${fmt(totalNet)}</td>
+    </tr></tfoot>
+  </table></div>`;
 }
 
 // ════════════════════════════════════════════
@@ -3345,8 +3850,8 @@ async function loadCategories() {
           </div>
         </div>
         <div style="display:flex;gap:4px">
-          <button class="btn btn-ghost btn-xs" onclick="openCatModal('${c.id}')">✏️</button>
-          <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('categories','${c.id}','la categoría')">🗑️</button>
+          <button class="btn btn-ghost btn-xs" onclick="openCatModal('${c.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+          <button class="btn btn-ghost btn-xs text-error" onclick="confirmDel('categories','${c.id}','la categoría')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
         </div>
       </div>`).join('');
   };
