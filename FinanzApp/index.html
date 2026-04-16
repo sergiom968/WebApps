@@ -1921,7 +1921,7 @@ function renderCharts(txns, mt, cats) {
       months.push(d.toLocaleString('es-ES',{month:'short'}));
       const m=txns.filter(t=>t.date?.startsWith(k));
       incs.push(m.filter(t=>t.type==='income').reduce((s,t)=>s+t.amount,0));
-      exps.push(m.filter(t=>t.type==='expense').reduce((s,t)=>s+t.amount,0));
+      exps.push(m.filter(t=>t.type==='expense'&&!t.is_card_payment).reduce((s,t)=>s+t.amount,0));
     }
     if(chEvo)chEvo.destroy();
     chEvo=new Chart(ctx,{type:'line',data:{labels:months,datasets:[
@@ -1933,7 +1933,7 @@ function renderCharts(txns, mt, cats) {
   const ctx2 = document.getElementById('chart-donut');
   if (ctx2) {
     const bycat={};
-    mt.filter(t=>t.type==='expense').forEach(t=>{
+    mt.filter(t=>t.type==='expense'&&!t.is_card_payment).forEach(t=>{
       const c=cats.find(x=>x.id===t.category_id);
       const n=c?.name||'Otros', col=c?.color||'#6b7280';
       if(!bycat[n])bycat[n]={total:0,color:col};
@@ -2039,10 +2039,13 @@ function renderRecPending(recs, debts=[]) {
 async function renderBalWidget(accs, cards) {
   const el = document.getElementById('dash-bal-w');
   if (!el) return;
-  if(!accs.length&&!cards.length){el.innerHTML='<div class="empty-state" style="padding:1rem"><p>Sin cuentas ni tarjetas</p></div>';return;}
-  const tAcc   = accs.reduce((s,a)=>s+(a.balance||0),0);
-  const tDebt  = cards.reduce((s,c)=>s+(c.current_balance||0),0);
-  const tLim   = cards.reduce((s,c)=>s+(c.credit_limit||0),0);
+  // Excluir archivadas del widget de saldos
+  const accsV  = accs.filter(a => !a.archived);
+  const cardsV = cards.filter(c => !c.archived);
+  if(!accsV.length&&!cardsV.length){el.innerHTML='<div class="empty-state" style="padding:1rem"><p>Sin cuentas ni tarjetas activas</p></div>';return;}
+  const tAcc   = accsV.reduce((s,a)=>s+(a.balance||0),0);
+  const tDebt  = cardsV.reduce((s,c)=>s+(c.current_balance||0),0);
+  const tLim   = cardsV.reduce((s,c)=>s+(c.credit_limit||0),0);
   // También traer deudas para mostrar en el widget
   const debts  = await dbGet('debts');
   const tDebts = debts.filter(d=>d.status==='active' && d.direction!=='owed').reduce((s,d)=>s+(d.remaining_amount||0),0);
@@ -2067,17 +2070,17 @@ async function renderBalWidget(accs, cards) {
     </div>
   </div>`;
 
-  if(accs.length){
+  if(accsV.length){
     html+=`<p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin-bottom:.35rem">🏦 Cuentas</p>`;
-    html+=accs.map(a=>`<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:.35rem">
+    html+=accsV.map(a=>`<div style="display:flex;align-items:center;gap:.75rem;padding:.5rem .75rem;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:.35rem">
       <div style="width:34px;height:34px;border-radius:9px;background:${a.color}22;display:flex;align-items:center;justify-content:center;color:${a.color};flex-shrink:0">${accIconSVG(a.icon, 20)}</div>
       <div style="flex:1;min-width:0"><p style="font-weight:600;font-size:.85rem">${a.name}</p><p style="font-size:.72rem;color:#94a3b8">${a.bank} · ${a.type==='ahorros'?'Ahorros':'Efectivo'}</p></div>
       <p style="font-weight:700;font-size:.95rem;color:${(a.balance||0)>=0?'#15803d':'#dc2626'};flex-shrink:0">${fmt(a.balance)}</p>
     </div>`).join('');
   }
-  if(cards.length){
+  if(cardsV.length){
     html+=`<p style="font-size:.7rem;font-weight:700;color:#94a3b8;text-transform:uppercase;margin:.5rem 0 .35rem">💳 Tarjetas</p>`;
-    html+=cards.map(c=>{
+    html+=cardsV.map(c=>{
       const used=c.credit_limit>0?(c.current_balance/c.credit_limit*100):0;
       const barC=used>80?'#ef4444':used>60?'#f97316':'#22c55e';
       return `<div style="padding:.625rem .75rem;border-radius:10px;background:#f8fafc;border:1px solid #e2e8f0;margin-bottom:.35rem">
@@ -2511,10 +2514,25 @@ async function loadAccs(){
   grid.innerHTML = active.map(a => renderCard(a, false)).join('');
   if (archived.length) {
     grid.innerHTML += `<div class="col-span-3" style="margin-top:1rem">
-      <p style="font-size:.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">📦 Archivadas (${archived.length})</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${archived.map(a=>renderCard(a,true)).join('')}</div>
+      <button onclick="toggleArchivedAccs()" id="btn-toggle-arch-accs"
+        style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;font-weight:700;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;cursor:pointer;margin-bottom:.75rem">
+        <span>📦</span><span id="lbl-toggle-arch-accs">Mostrar archivadas (${archived.length})</span>
+      </button>
+      <div id="archived-accs-grid" style="display:none">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">${archived.map(a=>renderCard(a,true)).join('')}</div>
+      </div>
     </div>`;
   }
+}
+
+function toggleArchivedAccs() {
+  const grid = document.getElementById('archived-accs-grid');
+  const lbl  = document.getElementById('lbl-toggle-arch-accs');
+  if (!grid) return;
+  const visible = grid.style.display !== 'none';
+  grid.style.display = visible ? 'none' : 'block';
+  const count = grid.querySelectorAll('.account-card').length;
+  lbl.textContent = visible ? `Mostrar archivadas (${count})` : `Ocultar archivadas (${count})`;
 }
 
 function openAccModal(id=null){
@@ -2605,10 +2623,25 @@ async function loadCards(){
   grid.innerHTML = active.map(c => renderCard(c, false)).join('');
   if (archived.length) {
     grid.innerHTML += `<div class="col-span-2" style="margin-top:1rem">
-      <p style="font-size:.75rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.75rem">📦 Archivadas (${archived.length})</p>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${archived.map(c=>renderCard(c,true)).join('')}</div>
+      <button onclick="toggleArchivedCards()" id="btn-toggle-arch-cards"
+        style="display:flex;align-items:center;gap:.5rem;font-size:.75rem;font-weight:700;color:#64748b;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:.4rem .9rem;cursor:pointer;margin-bottom:.75rem">
+        <span>📦</span><span id="lbl-toggle-arch-cards">Mostrar archivadas (${archived.length})</span>
+      </button>
+      <div id="archived-cards-grid" style="display:none">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${archived.map(c=>renderCard(c,true)).join('')}</div>
+      </div>
     </div>`;
   }
+}
+
+function toggleArchivedCards() {
+  const grid = document.getElementById('archived-cards-grid');
+  const lbl  = document.getElementById('lbl-toggle-arch-cards');
+  if (!grid) return;
+  const visible = grid.style.display !== 'none';
+  grid.style.display = visible ? 'none' : 'block';
+  const count = grid.querySelectorAll('.cc-visual').length;
+  lbl.textContent = visible ? `Mostrar archivadas (${count})` : `Ocultar archivadas (${count})`;
 }
 
 function openCardModal(id=null){
