@@ -950,51 +950,6 @@ tailwind.config = {
     box-shadow: var(--shadow-sm);
   }
 
-  /* ─── Informe colapsado ─── */
-  .informe-card.collapsed .informe-card-body,
-  .informe-card.collapsed .informe-avatars,
-  .informe-card.collapsed .informe-total-row { display: none; }
-  .informe-card.collapsed .informe-total-collapsed {
-    display: flex !important;
-  }
-  .informe-total-collapsed {
-    display: none;
-    justify-content: flex-end;
-    padding: 0 16px 12px;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text-primary);
-  }
-
-  /* ─── Informe oculto ─── */
-  .informe-card.hidden-card {
-    opacity: 0.45;
-    filter: grayscale(0.4);
-  }
-
-  /* ─── Fila de orden de informes ─── */
-  .orden-informe-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    border-bottom: 1px solid var(--border-light);
-  }
-  .orden-informe-row:last-child { border-bottom: none; }
-  .orden-informe-nombre {
-    flex: 1;
-    font-size: 15px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-  .orden-btn {
-    width: 34px; height: 34px; border-radius: 8px;
-    border: 1px solid var(--border); background: var(--bg-primary);
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; color: var(--text-secondary);
-  }
-  .orden-btn:disabled { opacity: 0.25; cursor: default; }
-
   /* ─── Informes - tarjetas ─── */
   .informe-card {
     background-color: var(--bg-card);
@@ -1276,14 +1231,6 @@ tailwind.config = {
           <span id="informe-period-label"></span>
           <button id="informe-next"><span class="material-symbols-rounded" style="font-size:18px;">chevron_right</span></button>
         </div>
-      </div>
-      <div style="display:flex;gap:4px;align-items:center;">
-        <button id="btn-ver-ocultos" onclick="toggleVerOcultos()" title="Ver informes ocultos" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-secondary);border-radius:8px;display:flex;align-items:center;">
-          <span class="material-symbols-rounded" style="font-size:22px;">visibility_off</span>
-        </button>
-        <button onclick="openOrdenarInformes()" title="Ordenar informes" style="background:none;border:none;cursor:pointer;padding:6px;color:var(--text-secondary);border-radius:8px;display:flex;align-items:center;">
-          <span class="material-symbols-rounded" style="font-size:22px;">sort</span>
-        </button>
       </div>
     </div>
     <div class="scroll-area" id="informes-swipe-area">
@@ -3101,224 +3048,118 @@ function calcHorasMes(turnoIds, year, month) {
       return sum + (a.overrideHoras !== undefined ? a.overrideHoras : shift.totalHoras);
     }, 0);
 }
-/* ── Estado UI de informes (localStorage, no DB) ── */
-const InformesUI = {
-  get collapsed() {
-    try { return new Set(JSON.parse(localStorage.getItem('ts_inf_collapsed') || '[]')); } catch(e) { return new Set(); }
-  },
-  setCollapsed(s) { localStorage.setItem('ts_inf_collapsed', JSON.stringify([...s])); },
-  get ocultos() {
-    try { return JSON.parse(localStorage.getItem('ts_inf_ocultos') || '{}'); } catch(e) { return {}; }
-  },
-  setOcultos(o) { localStorage.setItem('ts_inf_ocultos', JSON.stringify(o)); },
-  verOcultos: false,
-};
-
-function informeEstaOcultoEnMes(infId, mesStr) {
-  const cfg = InformesUI.ocultos[infId];
-  if (!cfg) return false;
-  if (typeof cfg === 'string') return mesStr >= cfg;
-  if (typeof cfg === 'object' && cfg.meses) return cfg.meses.includes(mesStr);
-  return false;
-}
-
-function toggleVerOcultos() {
-  InformesUI.verOcultos = !InformesUI.verOcultos;
-  const btn = document.getElementById('btn-ver-ocultos');
-  if (btn) {
-    btn.querySelector('.material-symbols-rounded').textContent =
-      InformesUI.verOcultos ? 'visibility' : 'visibility_off';
-    btn.style.color = InformesUI.verOcultos ? 'var(--accent)' : 'var(--text-secondary)';
-  }
-  renderInformes();
-}
-
-function ocultarInforme(infId) {
-  const { year, month } = AppState.informePeriod;
-  const mesStr = year + '-' + String(month+1).padStart(2,'0');
-  const mes = MONTHS_ES[month] + ' ' + year;
-  const inf = AppState.informes.find(i => i.id === infId);
-  const desdeEste = confirm('Ocultar "' + (inf ? inf.titulo : '') + '"?\n\nAceptar = desde ' + mes + ' en adelante\nCancelar = solo ' + mes);
-  const ocultos = InformesUI.ocultos;
-  if (desdeEste) {
-    ocultos[infId] = mesStr;
-  } else {
-    if (!ocultos[infId] || typeof ocultos[infId] === 'string') {
-      ocultos[infId] = { meses: [mesStr] };
-    } else {
-      ocultos[infId].meses = [...new Set([...(ocultos[infId].meses||[]), mesStr])];
-    }
-  }
-  InformesUI.setOcultos(ocultos);
-  renderInformes();
-}
-
-function mostrarInforme(infId) {
-  const { year, month } = AppState.informePeriod;
-  const mesStr = year + '-' + String(month+1).padStart(2,'0');
-  const ocultos = InformesUI.ocultos;
-  const cfg = ocultos[infId];
-  if (!cfg) return;
-  if (typeof cfg === 'string') {
-    if (cfg === mesStr || confirm('Este informe esta oculto desde ' + cfg + '. Reactivar completamente?')) {
-      delete ocultos[infId];
-    }
-  } else if (cfg.meses) {
-    ocultos[infId].meses = cfg.meses.filter(m => m !== mesStr);
-    if (ocultos[infId].meses.length === 0) delete ocultos[infId];
-  }
-  InformesUI.setOcultos(ocultos);
-  renderInformes();
-}
-
-function toggleCollapseInforme(infId) {
-  const collapsed = InformesUI.collapsed;
-  if (collapsed.has(infId)) collapsed.delete(infId);
-  else collapsed.add(infId);
-  InformesUI.setCollapsed(collapsed);
-  renderInformes();
-}
-
-let _ordenTemp = [];
-
-function openOrdenarInformes() {
-  _ordenTemp = [...AppState.informes];
-  renderOrdenarList();
-  openModal('modal-ordenar-informes');
-}
-
-function renderOrdenarList() {
-  const container = document.getElementById('ordenar-informes-list');
-  container.innerHTML = '';
-  _ordenTemp.forEach((inf, idx) => {
-    const row = document.createElement('div');
-    row.className = 'orden-informe-row';
-    row.innerHTML =
-      '<span class="orden-informe-nombre">' + inf.titulo + '</span>' +
-      '<button class="orden-btn" onclick="moverInforme(' + idx + ',-1)"' + (idx===0?' disabled':'') + '><span class="material-symbols-rounded" style="font-size:18px;">arrow_upward</span></button>' +
-      '<button class="orden-btn" onclick="moverInforme(' + idx + ',1)"' + (idx===_ordenTemp.length-1?' disabled':'') + '><span class="material-symbols-rounded" style="font-size:18px;">arrow_downward</span></button>';
-    container.appendChild(row);
-  });
-}
-
-function moverInforme(idx, delta) {
-  const newIdx = idx + delta;
-  if (newIdx < 0 || newIdx >= _ordenTemp.length) return;
-  const tmp = _ordenTemp[idx];
-  _ordenTemp[idx] = _ordenTemp[newIdx];
-  _ordenTemp[newIdx] = tmp;
-  renderOrdenarList();
-}
-
-function saveOrdenInformes() {
-  AppState.informes = _ordenTemp;
-  Storage.save();
-  closeModal('modal-ordenar-informes');
-  renderInformes();
-}
-
 
 function renderInformes() {
   const { year, month } = AppState.informePeriod;
-  const mesStr = year + '-' + String(month+1).padStart(2,'0');
-  const collapsed = InformesUI.collapsed;
+  const mesStr = `${year}-${String(month+1).padStart(2,'0')}`;
 
+  // Label período
   const firstDay = new Date(year, month, 1);
   const lastDay  = new Date(year, month + 1, 0);
   document.getElementById('informe-period-label').textContent =
-    DAYS_ES_LONG[firstDay.getDay()].slice(0,3).toLowerCase() + ', ' + firstDay.getDate() + ' de ' +
-    MONTHS_ES[month].slice(0,3).toLowerCase() + '. \u2013 ' + lastDay.getDate() + ' de ' +
-    MONTHS_ES[month].slice(0,3).toLowerCase() + '. de ' + year;
+    `${DAYS_ES_LONG[firstDay.getDay()].slice(0,3).toLowerCase()}, ${firstDay.getDate()} de ` +
+    `${MONTHS_ES[month].slice(0,3).toLowerCase()}. – ${lastDay.getDate()} de ` +
+    `${MONTHS_ES[month].slice(0,3).toLowerCase()}. de ${year}`;
 
   const container = document.getElementById('informes-content');
   container.innerHTML = '';
 
   if (AppState.informes.length === 0) {
-    container.innerHTML = '<div style="padding:40px 20px;text-align:center;color:var(--text-muted);"><span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:12px;opacity:0.3;">bar_chart</span><div style="font-size:16px;font-weight:500;margin-bottom:4px;">Sin informes</div><div style="font-size:13px;">Toca + para crear tu primer informe.</div></div>';
+    container.innerHTML = `
+      <div style="padding:40px 20px;text-align:center;color:var(--text-muted);">
+        <span class="material-symbols-rounded" style="font-size:48px;display:block;margin-bottom:12px;opacity:0.3;">bar_chart</span>
+        <div style="font-size:16px;font-weight:500;margin-bottom:4px;">Sin informes</div>
+        <div style="font-size:13px;">Toca + para crear tu primer informe.</div>
+      </div>`;
     return;
   }
 
-  const visibles = AppState.informes.filter(function(inf) { return !informeEstaOcultoEnMes(inf.id, mesStr); });
-  const ocultos  = AppState.informes.filter(function(inf) { return  informeEstaOcultoEnMes(inf.id, mesStr); });
-
-  const totalesMap = {};
+  // ── Calcular totales individuales y acumular gran total ──
   let granTotal = 0;
-  AppState.informes.forEach(function(inf) {
-    let total = calcHorasMes(inf.turnoIds, year, month) * (inf.salarioBase.valorHora || 0);
-    (inf.pagosExtra || []).forEach(function(pe) {
+  const totalesIndividuales = AppState.informes.map(inf => {
+    let total = 0;
+    total += calcHorasMes(inf.turnoIds, year, month) * (inf.salarioBase.valorHora || 0);
+    (inf.pagosExtra || []).forEach(pe => {
       total += calcHorasMes(pe.turnoIds || [], year, month) * (pe.valorHora || 0);
     });
-    (inf.pagosFijos || []).forEach(function(pf) {
-      if (!pf.mes || pf.mes === mesStr) total += (pf.valor || 0);
+    (inf.pagosFijos || []).forEach(pf => {
+      // Solo incluir si no tiene mes o si su mes coincide con el período actual
+      const aplica = !pf.mes || pf.mes === mesStr;
+      if (aplica) total += (pf.valor || 0);
     });
-    totalesMap[inf.id] = total;
-    if (!informeEstaOcultoEnMes(inf.id, mesStr)) granTotal += total;
+    granTotal += total;
+    return total;
   });
 
-  // Tarjeta Total mes
+  // ── Tarjeta "Total mes" — siempre primera ──
   const totalMesCard = document.createElement('div');
   totalMesCard.className = 'informe-card';
   totalMesCard.style.cssText = 'background:var(--today-bg);margin-bottom:16px;';
-  totalMesCard.innerHTML =
-    '<div class="informe-card-header" style="border-bottom-color:rgba(255,255,255,0.12);"><div class="informe-card-title" style="color:var(--today-text);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Total mes</div></div>' +
-    '<div style="padding:14px 16px 4px;"><span style="font-size:28px;font-weight:800;color:var(--today-text);letter-spacing:-0.5px;">' + formatMoney(granTotal) + '</span></div>' +
-    visibles.map(function(inf) {
-      return '<div style="display:flex;justify-content:space-between;padding:3px 16px;font-size:12px;"><span style="color:var(--today-text);opacity:0.7;">' + inf.titulo + '</span><span style="color:var(--today-text);opacity:0.85;font-weight:600;">' + formatMoney(totalesMap[inf.id]) + '</span></div>';
-    }).join('') +
-    '<div style="height:10px;"></div>';
+  totalMesCard.innerHTML = `
+    <div class="informe-card-header" style="border-bottom-color:rgba(255,255,255,0.12);">
+      <div class="informe-card-title" style="color:var(--today-text);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.4px;">Total mes</div>
+    </div>
+    <div style="padding:14px 16px;display:flex;align-items:baseline;gap:6px;">
+      <span style="font-size:28px;font-weight:800;color:var(--today-text);letter-spacing:-0.5px;">${formatMoney(granTotal)}</span>
+    </div>
+    ${AppState.informes.map((inf, i) => `
+      <div style="display:flex;justify-content:space-between;padding:4px 16px;font-size:12px;">
+        <span style="color:var(--today-text);opacity:0.7;">${inf.titulo}</span>
+        <span style="color:var(--today-text);opacity:0.85;font-weight:600;">${formatMoney(totalesIndividuales[i])}</span>
+      </div>`).join('')}
+    <div style="height:10px;"></div>`;
   container.appendChild(totalMesCard);
 
-  // Tarjetas visibles
-  visibles.forEach(function(inf) {
-    const isCollapsed = collapsed.has(inf.id);
-    const total = totalesMap[inf.id];
+  // ── Tarjetas individuales ──
+  AppState.informes.forEach((inf, infIdx) => {
     const card = document.createElement('div');
-    card.className = 'informe-card' + (isCollapsed ? ' collapsed' : '');
+    card.className = 'informe-card';
 
     const header = document.createElement('div');
     header.className = 'informe-card-header';
-    header.style.cursor = 'pointer';
-    header.onclick = function() { toggleCollapseInforme(inf.id); };
-    header.innerHTML =
-      '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">' +
-        '<span class="material-symbols-rounded" style="font-size:18px;color:var(--text-muted);transition:transform 0.2s;transform:' + (isCollapsed?'rotate(-90deg)':'rotate(0deg)') + '">expand_more</span>' +
-        '<div class="informe-card-title" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + inf.titulo + '</div>' +
-      '</div>' +
-      '<div class="informe-card-actions" onclick="event.stopPropagation()">' +
-        '<button onclick="openModalInforme(\'' + inf.id + '\')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-secondary);display:flex;" title="Editar"><span class="material-symbols-rounded" style="font-size:18px;">edit</span></button>' +
-        '<button onclick="ocultarInforme(\'' + inf.id + '\')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-secondary);display:flex;" title="Ocultar"><span class="material-symbols-rounded" style="font-size:18px;">visibility_off</span></button>' +
-        '<button onclick="deleteInforme(\'' + inf.id + '\')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--weekend);display:flex;" title="Eliminar"><span class="material-symbols-rounded" style="font-size:18px;">delete</span></button>' +
-      '</div>';
+    header.innerHTML = `
+      <div class="informe-card-title">${inf.titulo}</div>
+      <div class="informe-card-actions">
+        <button onclick="openModalInforme('${inf.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-secondary);display:flex;">
+          <span class="material-symbols-rounded" style="font-size:18px;">edit</span>
+        </button>
+        <button onclick="deleteInforme('${inf.id}')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--weekend);display:flex;">
+          <span class="material-symbols-rounded" style="font-size:18px;">delete</span>
+        </button>
+      </div>`;
     card.appendChild(header);
 
-    // Total colapsado
-    const colDiv = document.createElement('div');
-    colDiv.className = 'informe-total-collapsed';
-    colDiv.textContent = formatMoney(total);
-    card.appendChild(colDiv);
-
-    // Body
     const body = document.createElement('div');
     body.className = 'informe-card-body';
+
+    // Salario base
     const horasBase = calcHorasMes(inf.turnoIds, year, month);
-    body.appendChild(makeInformePagoRow(inf.salarioBase.nombre, horasBase + 'h', formatMoney(horasBase * (inf.salarioBase.valorHora||0)), false));
-    (inf.pagosExtra || []).forEach(function(pe) {
-      const h = calcHorasMes(pe.turnoIds||[], year, month);
-      body.appendChild(makeInformePagoRow(pe.nombre, h+'h', '+'+formatMoney(h*(pe.valorHora||0)), true));
+    const valorBase = horasBase * (inf.salarioBase.valorHora || 0);
+    body.appendChild(makeInformePagoRow(inf.salarioBase.nombre, horasBase + 'h', formatMoney(valorBase), false));
+
+    // Pagos por hora
+    (inf.pagosExtra || []).forEach(pe => {
+      const h = calcHorasMes(pe.turnoIds || [], year, month);
+      const v = h * (pe.valorHora || 0);
+      body.appendChild(makeInformePagoRow(pe.nombre, h + 'h', '+' + formatMoney(v), true));
     });
-    (inf.pagosFijos || []).forEach(function(pf) {
-      if (!pf.mes || pf.mes === mesStr) {
-        const ml = pf.mes ? MONTHS_ES[parseInt(pf.mes.split('-')[1])-1]+' '+pf.mes.split('-')[0] : '';
-        body.appendChild(makeInformePagoRow(pf.nombre, [pf.nota,ml].filter(Boolean).join(' \u00b7 '), '+'+formatMoney(pf.valor||0), true));
-      }
+
+    // Pagos fijos — solo los que aplican a este mes
+    (inf.pagosFijos || []).forEach(pf => {
+      const aplica = !pf.mes || pf.mes === mesStr;
+      if (!aplica) return;
+      const mesLabel = pf.mes ? `${MONTHS_ES[parseInt(pf.mes.split('-')[1])-1]} ${pf.mes.split('-')[0]}` : '';
+      const sub = [pf.nota, mesLabel].filter(Boolean).join(' · ');
+      body.appendChild(makeInformePagoRow(pf.nombre, sub, '+' + formatMoney(pf.valor || 0), true));
     });
+
     card.appendChild(body);
 
     // Avatares
     const avatarRow = document.createElement('div');
     avatarRow.className = 'informe-avatars';
-    inf.turnoIds.slice(0,4).forEach(function(tid) {
-      const s = AppState.shifts.find(function(x) { return x.id === tid; });
+    inf.turnoIds.slice(0, 4).forEach(tid => {
+      const s = AppState.shifts.find(x => x.id === tid);
       if (!s) return;
       const av = document.createElement('div');
       av.className = 'informe-avatar-sm';
@@ -3329,43 +3170,21 @@ function renderInformes() {
     if (inf.turnoIds.length > 4) {
       const more = document.createElement('div');
       more.className = 'informe-more-btn';
-      more.innerHTML = '<span class="material-symbols-rounded" style="font-size:14px;">more_horiz</span>';
+      more.innerHTML = `<span class="material-symbols-rounded" style="font-size:14px;">more_horiz</span>`;
       avatarRow.appendChild(more);
     }
     card.appendChild(avatarRow);
 
+    // Total individual
     const totalRow = document.createElement('div');
     totalRow.className = 'informe-total-row';
-    totalRow.innerHTML = '<span class="informe-total-label">Total</span><span class="informe-total-valor">' + formatMoney(total) + '</span>';
+    totalRow.innerHTML = `
+      <span class="informe-total-label">Total</span>
+      <span class="informe-total-valor">${formatMoney(totalesIndividuales[infIdx])}</span>`;
     card.appendChild(totalRow);
 
     container.appendChild(card);
   });
-
-  // Informes ocultos
-  if (InformesUI.verOcultos && ocultos.length > 0) {
-    const sep = document.createElement('div');
-    sep.style.cssText = 'font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;padding:8px 4px 6px;';
-    sep.textContent = 'Informes ocultos este mes';
-    container.appendChild(sep);
-    ocultos.forEach(function(inf) {
-      const card = document.createElement('div');
-      card.className = 'informe-card';
-      card.style.opacity = '0.5';
-      card.innerHTML =
-        '<div class="informe-card-header">' +
-          '<div style="display:flex;align-items:center;gap:8px;flex:1;">' +
-            '<span class="material-symbols-rounded" style="font-size:18px;color:var(--text-muted);">visibility_off</span>' +
-            '<div class="informe-card-title">' + inf.titulo + '</div>' +
-          '</div>' +
-          '<div class="informe-card-actions">' +
-            '<button onclick="mostrarInforme(\'' + inf.id + '\')" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--accent);display:flex;" title="Reactivar"><span class="material-symbols-rounded" style="font-size:18px;">visibility</span></button>' +
-          '</div>' +
-        '</div>' +
-        '<div style="padding:6px 16px 12px;font-size:13px;color:var(--text-muted);">' + formatMoney(totalesMap[inf.id]) + ' \u00b7 oculto este mes</div>';
-      container.appendChild(card);
-    });
-  }
 }
 
 function makeInformePagoRow(nombre, sub, valor, positive) {
@@ -3419,15 +3238,12 @@ document.getElementById('informe-next').onclick = () => navigateInformePeriod(1)
 const _informe = {
   id: null,
   turnosSeleccionados: new Set(),
-  pagosExtra: [],
-  pagosFijos: [],
-  pagosFijosOtrosMeses: [],  // pagos fijos de meses distintos al activo — se conservan al guardar
+  pagosExtra: [],   // [{id, nombre, valorHora, turnoIds: Set}]
+  pagosFijos: [],   // [{id, nombre, valor, nota}]
 };
 
 function openModalInforme(informeId) {
   const inf = informeId ? AppState.informes.find(i => i.id === informeId) : null;
-  const { year, month } = AppState.informePeriod;
-  const mesStr = `${year}-${String(month+1).padStart(2,'0')}`;
 
   _informe.id = inf ? inf.id : null;
   document.getElementById('modal-informe-title').textContent = inf ? 'Editar Informe' : 'Nuevo Informe';
@@ -3435,26 +3251,20 @@ function openModalInforme(informeId) {
 
   document.getElementById('informe-titulo').value = inf ? inf.titulo : '';
   document.getElementById('informe-salario-nombre').value = inf ? (inf.salarioBase.nombre || 'Salario por hora') : 'Salario por hora';
+  // Mostrar con puntuación de miles
   const vBase = inf ? (inf.salarioBase.valorHora || 0) : 0;
   document.getElementById('informe-salario-valor').value = vBase ? formatNumberInput(vBase) : '';
 
   // Turnos seleccionados
   _informe.turnosSeleccionados = new Set(inf ? inf.turnoIds : []);
 
-  // Pagos extra (sin filtro de mes — aplican siempre)
+  // Pagos extra
   _informe.pagosExtra = inf ? (inf.pagosExtra || []).map(pe => ({
     ...pe, turnoIds: new Set(pe.turnoIds || [])
   })) : [];
 
-  // Pagos fijos: mostrar solo los del mes activo O los de todos los meses
-  // Guardar los de otros meses para no perderlos al guardar
-  const todosPagosFijos = inf ? [...(inf.pagosFijos || [])] : [];
-  _informe.pagosFijosOtrosMeses = todosPagosFijos.filter(pf =>
-    pf.mes && pf.mes !== mesStr   // tienen mes específico y NO es el actual
-  );
-  _informe.pagosFijos = todosPagosFijos.filter(pf =>
-    !pf.mes || pf.mes === mesStr  // todos los meses O mes actual
-  );
+  // Pagos fijos
+  _informe.pagosFijos = inf ? [...(inf.pagosFijos || [])] : [];
 
   renderInformeTurnosList();
   renderPagosExtra();
@@ -3636,12 +3446,6 @@ function saveInforme() {
     valorHora: parseMoney(document.getElementById('informe-salario-valor').value),
   };
 
-  // Reunir: pagos editados (mes activo / todos) + pagos de otros meses (intactos)
-  const pagosFijosCompletos = [
-    ..._informe.pagosFijos,
-    ...(_informe.pagosFijosOtrosMeses || []),
-  ];
-
   const nuevoInforme = {
     id:        _informe.id || genUUID(),
     titulo,
@@ -3650,7 +3454,7 @@ function saveInforme() {
     pagosExtra: _informe.pagosExtra.map(pe => ({
       ...pe, turnoIds: [...pe.turnoIds]
     })),
-    pagosFijos: pagosFijosCompletos,
+    pagosFijos: [..._informe.pagosFijos],
   };
 
   if (_informe.id) {
@@ -4051,30 +3855,6 @@ document.addEventListener('DOMContentLoaded', init);
     </div>
     <div class="modal-footer">
       <button class="btn-primary" id="btn-guardar-informe" onclick="saveInforme()">Guardar informe</button>
-    </div>
-  </div>
-</div>
-
-<!-- ============================================================
-     MODAL: ORDENAR INFORMES
-     ============================================================ -->
-<div class="modal-overlay" id="modal-ordenar-informes" onclick="handleModalOverlayClick(event,'modal-ordenar-informes')">
-  <div class="modal-box">
-    <div class="modal-handle"></div>
-    <div class="modal-header">
-      <span class="modal-title">Ordenar informes</span>
-      <button class="modal-close" onclick="closeModal('modal-ordenar-informes')">
-        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
-      </button>
-    </div>
-    <div class="modal-scroll" style="padding:8px 0 0;">
-      <div style="padding:0 20px 10px;font-size:13px;color:var(--text-secondary);">
-        Toca las flechas para mover cada informe hacia arriba o abajo.
-      </div>
-      <div id="ordenar-informes-list"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn-primary" onclick="saveOrdenInformes()">Guardar orden</button>
     </div>
   </div>
 </div>
