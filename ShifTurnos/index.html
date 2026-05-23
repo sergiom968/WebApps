@@ -1858,12 +1858,15 @@ const DB = {
 
     AppState.informes = (i.data || []).map(r => ({
       id: r.id, titulo: r.titulo,
+      mesCreacion: r.mes_creacion || null,
       turnoIds:    r.turno_ids    || [],
       salarioBase: r.salario_base || { nombre: 'Salario por hora', valorHora: 0 },
       pagosExtra:  r.pagos_extra  || [],
       pagosFijos:  r.pagos_fijos  || [],
     }));
 
+    // Restaurar orden guardado después de cargar de Supabase
+    aplicarOrdenInformes();
     return true;
   },
 
@@ -1929,8 +1932,12 @@ const DB = {
   async upsertInforme(inf) {
     if (!AppState.supabaseClient) return;
     const { error } = await AppState.supabaseClient.from('informes').upsert({
-      id: inf.id, titulo: inf.titulo, turno_ids: inf.turnoIds,
-      salario_base: inf.salarioBase, pagos_extra: inf.pagosExtra, pagos_fijos: inf.pagosFijos,
+      id: inf.id, titulo: inf.titulo,
+      mes_creacion: inf.mesCreacion || null,
+      turno_ids:    inf.turnoIds,
+      salario_base: inf.salarioBase,
+      pagos_extra:  inf.pagosExtra,
+      pagos_fijos:  inf.pagosFijos,
     }, { onConflict: 'id' });
     if (error) { console.error('upsertInforme:', error.message); throw error; }
   },
@@ -3068,6 +3075,7 @@ const DEMO_INFORMES = [
   {
     id: 'inf_1',
     titulo: 'E.S.E Santiago',
+    mesCreacion: '2026-03',
     turnoIds: ['shift_1','shift_2','shift_3'],
     salarioBase: { nombre: 'Salario por hora', valorHora: 0 },
     pagosExtra: [
@@ -3080,6 +3088,7 @@ const DEMO_INFORMES = [
   {
     id: 'inf_2',
     titulo: 'Sogamoso',
+    mesCreacion: '2026-03',
     turnoIds: ['shift_5','shift_6'],
     salarioBase: { nombre: 'Salario por hora', valorHora: 85000 },
     pagosExtra: [],
@@ -3133,12 +3142,23 @@ function toggleVerOcultos() {
   renderInformes();
 }
 
+let _ocultarInformeId = null;
+
 function ocultarInforme(infId) {
+  _ocultarInformeId = infId;
+  const inf = AppState.informes.find(i => i.id === infId);
+  const { year, month } = AppState.informePeriod;
+  const mes = MONTHS_ES[month] + ' ' + year;
+  document.getElementById('ocultar-informe-nombre').textContent = inf ? inf.titulo : '';
+  document.getElementById('ocultar-informe-mes').textContent = mes;
+  document.getElementById('modal-ocultar-informe').classList.add('visible');
+}
+
+function confirmarOcultarInforme(desdeEste) {
+  const infId = _ocultarInformeId;
+  if (!infId) return;
   const { year, month } = AppState.informePeriod;
   const mesStr = year + '-' + String(month+1).padStart(2,'0');
-  const mes = MONTHS_ES[month] + ' ' + year;
-  const inf = AppState.informes.find(i => i.id === infId);
-  const desdeEste = confirm('Ocultar "' + (inf ? inf.titulo : '') + '"?\n\nAceptar = desde ' + mes + ' en adelante\nCancelar = solo ' + mes);
   const ocultos = InformesUI.ocultos;
   if (desdeEste) {
     ocultos[infId] = mesStr;
@@ -3150,24 +3170,80 @@ function ocultarInforme(infId) {
     }
   }
   InformesUI.setOcultos(ocultos);
+  document.getElementById('modal-ocultar-informe').classList.remove('visible');
+  _ocultarInformeId = null;
   renderInformes();
 }
 
+let _mostrarInformeId = null;
+
 function mostrarInforme(infId) {
+  _mostrarInformeId = infId;
+  const inf = AppState.informes.find(i => i.id === infId);
+  const { year, month } = AppState.informePeriod;
+  const mesStr = year + '-' + String(month+1).padStart(2,'0');
+  const cfg = InformesUI.ocultos[infId];
+
+  // Determinar qué opciones mostrar según cómo está oculto
+  const esDesdeEste = typeof cfg === 'string'; // oculto desde un mes en adelante
+  const esSoloeEste = typeof cfg === 'object' && cfg.meses; // oculto solo en meses específicos
+
+  document.getElementById('mostrar-informe-nombre').textContent = inf ? inf.titulo : '';
+  document.getElementById('mostrar-informe-mes').textContent = MONTHS_ES[month] + ' ' + year;
+
+  // Mostrar/ocultar opción "desde este mes en adelante" solo si aplica
+  const optAdelante = document.getElementById('mostrar-opt-adelante');
+  optAdelante.style.display = esDesdeEste ? 'flex' : 'none';
+
+  document.getElementById('modal-mostrar-informe').classList.add('visible');
+}
+
+function confirmarMostrarInforme(soloEsteMes) {
+  const infId = _mostrarInformeId;
+  if (!infId) return;
   const { year, month } = AppState.informePeriod;
   const mesStr = year + '-' + String(month+1).padStart(2,'0');
   const ocultos = InformesUI.ocultos;
   const cfg = ocultos[infId];
-  if (!cfg) return;
-  if (typeof cfg === 'string') {
-    if (cfg === mesStr || confirm('Este informe esta oculto desde ' + cfg + '. Reactivar completamente?')) {
-      delete ocultos[infId];
+
+  if (soloEsteMes) {
+    // Reactivar solo este mes: si era "desde X", convertir a lista excluyendo este mes
+    if (typeof cfg === 'string') {
+      // Generar lista de meses ocultos desde cfg hasta hoy excluyendo mesStr
+      // Más simple: guardar como "ocultarDesde" del mes siguiente
+      const [y, m] = cfg.split('-').map(Number);
+      const mesActual = new Date(year, month, 1);
+      const mesOrigen = new Date(y, m-1, 1);
+      if (mesActual <= mesOrigen) {
+        // Este mes es el de inicio — eliminar completamente
+        delete ocultos[infId];
+      } else {
+        // Guardar los meses anteriores como lista de meses específicos
+        const mesesOcultos = [];
+        const cursor = new Date(mesOrigen);
+        while (cursor <= mesActual) {
+          const ms = cursor.getFullYear() + '-' + String(cursor.getMonth()+1).padStart(2,'0');
+          if (ms !== mesStr) mesesOcultos.push(ms);
+          cursor.setMonth(cursor.getMonth()+1);
+        }
+        if (mesesOcultos.length > 0) {
+          ocultos[infId] = { meses: mesesOcultos };
+        } else {
+          delete ocultos[infId];
+        }
+      }
+    } else if (cfg && cfg.meses) {
+      ocultos[infId].meses = cfg.meses.filter(m => m !== mesStr);
+      if (ocultos[infId].meses.length === 0) delete ocultos[infId];
     }
-  } else if (cfg.meses) {
-    ocultos[infId].meses = cfg.meses.filter(m => m !== mesStr);
-    if (ocultos[infId].meses.length === 0) delete ocultos[infId];
+  } else {
+    // Reactivar desde este mes en adelante: eliminar completamente
+    delete ocultos[infId];
   }
+
   InformesUI.setOcultos(ocultos);
+  document.getElementById('modal-mostrar-informe').classList.remove('visible');
+  _mostrarInformeId = null;
   renderInformes();
 }
 
@@ -3212,9 +3288,32 @@ function moverInforme(idx, delta) {
 
 function saveOrdenInformes() {
   AppState.informes = _ordenTemp;
+  // Guardar el orden como array de IDs en localStorage (persiste entre sesiones)
+  localStorage.setItem('ts_inf_orden', JSON.stringify(_ordenTemp.map(i => i.id)));
   Storage.save();
   closeModal('modal-ordenar-informes');
   renderInformes();
+}
+
+/**
+ * Aplica el orden guardado en localStorage a AppState.informes.
+ * Llamar después de cargar datos (local o Supabase).
+ */
+function aplicarOrdenInformes() {
+  const ordenRaw = localStorage.getItem('ts_inf_orden');
+  if (!ordenRaw) return;
+  try {
+    const orden = JSON.parse(ordenRaw);
+    AppState.informes.sort((a, b) => {
+      const ia = orden.indexOf(a.id);
+      const ib = orden.indexOf(b.id);
+      // IDs no encontrados van al final
+      if (ia === -1 && ib === -1) return 0;
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+  } catch(e) {}
 }
 
 
@@ -3238,12 +3337,17 @@ function renderInformes() {
     return;
   }
 
-  const visibles = AppState.informes.filter(function(inf) { return !informeEstaOcultoEnMes(inf.id, mesStr); });
-  const ocultos  = AppState.informes.filter(function(inf) { return  informeEstaOcultoEnMes(inf.id, mesStr); });
+  // Filtrar: solo mostrar informes creados en este mes o antes
+  const informesDelMes = AppState.informes.filter(inf =>
+    !inf.mesCreacion || inf.mesCreacion <= mesStr
+  );
+
+  const visibles = informesDelMes.filter(function(inf) { return !informeEstaOcultoEnMes(inf.id, mesStr); });
+  const ocultos  = informesDelMes.filter(function(inf) { return  informeEstaOcultoEnMes(inf.id, mesStr); });
 
   const totalesMap = {};
   let granTotal = 0;
-  AppState.informes.forEach(function(inf) {
+  informesDelMes.forEach(function(inf) {
     let total = calcHorasMes(inf.turnoIds, year, month) * (inf.salarioBase.valorHora || 0);
     (inf.pagosExtra || []).forEach(function(pe) {
       total += calcHorasMes(pe.turnoIds || [], year, month) * (pe.valorHora || 0);
@@ -3643,9 +3747,13 @@ function saveInforme() {
   ];
 
   const nuevoInforme = {
-    id:        _informe.id || genUUID(),
+    id:           _informe.id || genUUID(),
     titulo,
-    turnoIds:  [..._informe.turnosSeleccionados],
+    // mesCreacion: 'YYYY-MM' del mes activo cuando se crea (solo se asigna una vez)
+    mesCreacion:  _informe.id
+      ? (AppState.informes.find(i => i.id === _informe.id)?.mesCreacion || null)
+      : (AppState.informePeriod.year + '-' + String(AppState.informePeriod.month+1).padStart(2,'0')),
+    turnoIds:     [..._informe.turnosSeleccionados],
     salarioBase,
     pagosExtra: _informe.pagosExtra.map(pe => ({
       ...pe, turnoIds: [...pe.turnoIds]
@@ -3968,6 +4076,7 @@ function resetOverride() {
    ================================================================ */
 function init() {
   Storage.load();
+  aplicarOrdenInformes(); // restaurar orden guardado
   applyTheme();
   syncSettingsUI();
   renderCalendar();
@@ -4051,6 +4160,86 @@ document.addEventListener('DOMContentLoaded', init);
     </div>
     <div class="modal-footer">
       <button class="btn-primary" id="btn-guardar-informe" onclick="saveInforme()">Guardar informe</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: OCULTAR INFORME
+     ============================================================ -->
+<div class="modal-overlay" id="modal-ocultar-informe" onclick="handleModalOverlayClick(event,'modal-ocultar-informe')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Ocultar informe</span>
+      <button class="modal-close" onclick="closeModal('modal-ocultar-informe')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll">
+      <div style="padding:4px 0 16px;">
+        <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;" id="ocultar-informe-nombre"></div>
+        <div style="font-size:13px;color:var(--text-secondary);">¿En qué meses quieres ocultar este informe?</div>
+      </div>
+      <!-- Opción 1: solo este mes -->
+      <div onclick="confirmarOcultarInforme(false)" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-primary);cursor:pointer;margin-bottom:10px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <span class="material-symbols-rounded" style="font-size:22px;color:var(--accent);">calendar_today</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Solo <span id="ocultar-informe-mes"></span></div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">El informe volverá a aparecer el mes siguiente</div>
+        </div>
+      </div>
+      <!-- Opción 2: desde este mes en adelante -->
+      <div onclick="confirmarOcultarInforme(true)" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-primary);cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--weekend)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <span class="material-symbols-rounded" style="font-size:22px;color:var(--weekend);">hide_source</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Desde este mes en adelante</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">El informe no aparecerá en este ni en meses futuros</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding-top:8px;">
+      <button class="btn-primary" style="background:var(--bg-primary);color:var(--text-secondary);border:1px solid var(--border);" onclick="closeModal('modal-ocultar-informe')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: REACTIVAR INFORME
+     ============================================================ -->
+<div class="modal-overlay" id="modal-mostrar-informe" onclick="handleModalOverlayClick(event,'modal-mostrar-informe')">
+  <div class="modal-box">
+    <div class="modal-handle"></div>
+    <div class="modal-header">
+      <span class="modal-title">Reactivar informe</span>
+      <button class="modal-close" onclick="closeModal('modal-mostrar-informe')">
+        <span class="material-symbols-rounded" style="font-size:18px;">close</span>
+      </button>
+    </div>
+    <div class="modal-scroll">
+      <div style="padding:4px 0 16px;">
+        <div style="font-size:15px;font-weight:600;color:var(--text-primary);margin-bottom:6px;" id="mostrar-informe-nombre"></div>
+        <div style="font-size:13px;color:var(--text-secondary);">¿En qué meses quieres reactivar este informe?</div>
+      </div>
+      <!-- Opción: solo este mes -->
+      <div onclick="confirmarMostrarInforme(true)" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-primary);cursor:pointer;margin-bottom:10px;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <span class="material-symbols-rounded" style="font-size:22px;color:var(--accent);">calendar_today</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Solo <span id="mostrar-informe-mes"></span></div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">El informe aparece solo en este mes</div>
+        </div>
+      </div>
+      <!-- Opción: desde este mes en adelante (solo si estaba oculto "desde X") -->
+      <div id="mostrar-opt-adelante" onclick="confirmarMostrarInforme(false)" style="display:flex;align-items:center;gap:12px;padding:14px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg-primary);cursor:pointer;transition:border-color 0.15s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'">
+        <span class="material-symbols-rounded" style="font-size:22px;color:var(--accent);">visibility</span>
+        <div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary);">Desde este mes en adelante</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">El informe vuelve a aparecer en este y futuros meses</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="padding-top:8px;">
+      <button class="btn-primary" style="background:var(--bg-primary);color:var(--text-secondary);border:1px solid var(--border);" onclick="closeModal('modal-mostrar-informe')">Cancelar</button>
     </div>
   </div>
 </div>
