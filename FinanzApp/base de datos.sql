@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS public.categories (
   type       text        NOT NULL CHECK (type = ANY (ARRAY['income','expense'])),
   icon       text        NOT NULL DEFAULT '📦',
   color      text        NOT NULL DEFAULT '#6b7280',
+  is_payment boolean     NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT categories_pkey PRIMARY KEY (id)
 );
