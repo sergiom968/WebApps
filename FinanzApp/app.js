@@ -895,7 +895,7 @@ async function renderBalWidget(accs, cards) {
     </div>
     <div class="bal-item">
       <div class="bi-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg></div>
-      <p class="bi-label">Disponible</p>
+      <p class="bi-label">Cupo disponible</p>
       <p class="bi-value">${fmt(tLim-tDebt)}</p>
     </div>
     <div class="bal-item">
