@@ -1,0 +1,18 @@
+{
+  "name": "TurnoShift",
+  "short_name": "TurnoShift",
+  "description": "Gestiona tus turnos de trabajo",
+  "start_url": "index.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F5F5F7",
+  "theme_color": "#1A1A2E",
+  "lang": "es",
+  "icons": [
+    { "src": "https://sergiom968.github.io/images/calendar.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "https://sergiom968.github.io/images/calendar.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "https://sergiom968.github.io/images/calendar.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "categories": ["productivity", "utilities"]
+}
