@@ -1096,11 +1096,6 @@ function toggleRecPanel() {
 function onTxnSrcChange() {
   const isCard=getV('txn-src').startsWith('card:');
   const aw=document.getElementById('txn-rec-auto-wrap');if(aw)aw.style.display=isCard?'block':'none';
-  if(isCard){
-    const ccCat=localStorage.getItem('fin_cc_pay_cat');
-    const cs=document.getElementById('txn-cat');
-    if(ccCat&&cs&&[...cs.options].some(o=>o.value===ccCat))cs.value=ccCat;
-  }
 }
 
 // Guarda la transacción (nueva o edición)
